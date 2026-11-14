@@ -45,9 +45,12 @@ def apply(model, operations, actor="AI", basis=None):
                 value["actor"] = actor
                 if protected or changed_authority:
                     value["authorization_basis"] = basis
-        if old is not None:
+        if op["action"] == "delete":
             result[collection].remove(old)
-        if op["action"] == "put":
+        elif old is None:
             result[collection].append(value)
+        else:
+            # The position of a relation determines its sibling order in trees.
+            result[collection][result[collection].index(old)] = value
     # Validate the entire batch, so endpoint deletion/replacement can be transactional.
     return validate(result)

@@ -161,6 +161,15 @@ class LittleLoopTests(unittest.TestCase):
         self.model=json.loads((ROOT/'examples/littleloop/.singularity/model.json').read_text(encoding='utf-8'))
         validate(self.model)
 
+    def test_editing_relation_metadata_preserves_sibling_order(self):
+        before = tree(self.model, 'VIEW-SYSTEM')['rows']
+        relation = next(edge for edge in self.model['relations'] if edge['id'] == 'REL-001')
+        updated = apply(self.model, [{
+            'action': 'put', 'collection': 'relations',
+            'value': {**relation, 'rationale': 'Clarify the relationship'},
+        }])
+        self.assertEqual(tree(updated, 'VIEW-SYSTEM')['rows'], before)
+
     def test_design_context(self):
         context=traverse(self.model,'IFACE-EVENT',2)
         ids={n['id'] for n in context['nodes']}
