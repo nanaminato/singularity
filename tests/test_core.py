@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -252,8 +253,26 @@ class LittleLoopTests(unittest.TestCase):
                     post('api/apply', operations=operations)
                 self.assertEqual(caught.exception.code, 409)
                 caught.exception.close()
-                with local_http.open(url,timeout=5) as response:
-                    self.assertIn('text/html',response.headers['Content-Type'])
+                if (ROOT / 'web/dist/editor/browser/index.html').is_file():
+                    with local_http.open(url,timeout=5) as response:
+                        self.assertIn('text/html',response.headers['Content-Type'])
+                        html = response.read().decode()
+                        self.assertIn('<app-root>', html)
+                    for asset in re.findall(r'(?:src|href)="([^"]+\.(?:js|css))"', html):
+                        with local_http.open(url + asset, timeout=5) as response:
+                            self.assertEqual(response.status, 200)
+                            self.assertIn('text/javascript' if asset.endswith('.js') else 'text/css', response.headers['Content-Type'])
+                else:
+                    with self.assertRaises(urllib.error.HTTPError) as caught:
+                        local_http.open(url, timeout=5)
+                    self.assertEqual(caught.exception.code, 503)
+                    self.assertIn('npm run build', caught.exception.read().decode())
+                    caught.exception.close()
+                for path in ('%2e%2e/package.json', '%2e%2e/%2e%2e/%2e%2e/.singularity/model.json', 'api/missing'):
+                    with self.assertRaises(urllib.error.HTTPError) as caught:
+                        local_http.open(url + path, timeout=5)
+                    self.assertEqual(caught.exception.code, 404)
+                    caught.exception.close()
                 with self.assertRaises(urllib.error.HTTPError) as caught:
                     local_http.open(urllib.request.Request(url,headers={'Host':'untrusted.example'}),timeout=5)
                 self.assertEqual(caught.exception.code,403)

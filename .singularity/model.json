@@ -82,8 +82,8 @@
     {
       "id": "MOD-CLI",
       "type": "module",
-      "title": "CLI 与只读预览",
-      "body": "JSON 命令行事务与本机只读预览；完整图形编辑器待后续实现。",
+      "title": "CLI 与本机 Web API",
+      "body": "JSON 命令行事务、本机模型/保存/上下文 API，以及 Angular 构建产物服务。前端通过共享核心应用服务更新模型。",
       "actor": "AI",
       "authorization": "not_applicable",
       "delivery": "implemented",
@@ -135,6 +135,62 @@
       "references": [
         "REF-TESTS"
       ]
+    },
+    {
+      "id": "INTENT-ANGULAR-EDITOR",
+      "type": "intent",
+      "title": "使用最新稳定 Angular 构建网页编辑器",
+      "body": "将网页编辑器前端放在 web，采用当前最新稳定 Angular；保留 format 3 项目模型和共享应用服务。",
+      "actor": "Human",
+      "authorization": "confirmed",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {},
+      "authorization_basis": "2026-11-14 当前会话：用户明确要求使用 Angular 作为网页编辑器框架，并使用最新 Angular。"
+    },
+    {
+      "id": "MOD-ANGULAR-EDITOR",
+      "type": "module",
+      "title": "Angular 网页编辑器",
+      "body": "web 使用 Angular 22.2.6、CLI/build 22.2.7；standalone 组件、signals、Forms、HttpClient 与 Canvas。支持树编辑、类型字段、关系/引用/视图管理、上下文查询和 revision 冲突提示。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-ANGULAR-WEB"
+      ]
+    },
+    {
+      "id": "TEST-ANGULAR-EDITOR",
+      "type": "test",
+      "title": "Angular 与 LittleLoop 编辑回归",
+      "body": "生产构建、前端字段/树事务测试、Edge 浏览器临时 LittleLoop 项目编辑、Python 核心与本机 HTTP 回归。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "passed",
+      "attributes": {},
+      "verification_basis": [
+        "EVIDENCE-ANGULAR-EDITOR"
+      ],
+      "references": [
+        "REF-ANGULAR-E2E"
+      ]
+    },
+    {
+      "id": "EVIDENCE-ANGULAR-EDITOR",
+      "type": "evidence",
+      "title": "Angular 迁移验证记录",
+      "body": "2026-11-14：生产构建成功；3 项前端单元测试、3 项 Edge 浏览器测试及 21 项 Python 回归通过。浏览器测试使用临时 LittleLoop 副本；未实际生成 PyInstaller 安装包，也未验证所有浏览器。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {
+        "observation": "npm run build；npm test：3 passed；npm run test:e2e：3 passed；python -m unittest discover -s tests -v：21 tests, OK。浏览器覆盖类型字段持久化、409 草稿、子节点、引用、根节点、查询、缩放、树拖拽和关系增删改。"
+      }
     }
   ],
   "relations": [
@@ -215,6 +271,36 @@
       "type": "supports",
       "source": "EVIDENCE-CORE",
       "target": "TEST-CORE"
+    },
+    {
+      "id": "REL-ANGULAR-CONTAINS",
+      "type": "contains",
+      "source": "SYS-SINGULARITY",
+      "target": "MOD-ANGULAR-EDITOR"
+    },
+    {
+      "id": "REL-ANGULAR-INTENT",
+      "type": "implements",
+      "source": "MOD-ANGULAR-EDITOR",
+      "target": "INTENT-ANGULAR-EDITOR"
+    },
+    {
+      "id": "REL-ANGULAR-API",
+      "type": "depends_on",
+      "source": "MOD-ANGULAR-EDITOR",
+      "target": "MOD-CLI"
+    },
+    {
+      "id": "REL-ANGULAR-TEST",
+      "type": "verifies",
+      "source": "TEST-ANGULAR-EDITOR",
+      "target": "MOD-ANGULAR-EDITOR"
+    },
+    {
+      "id": "REL-ANGULAR-EVIDENCE",
+      "type": "supports",
+      "source": "EVIDENCE-ANGULAR-EDITOR",
+      "target": "TEST-ANGULAR-EDITOR"
     }
   ],
   "references": [
@@ -244,6 +330,20 @@
       "kind": "project_file",
       "target": "docs/migration.md",
       "purpose": "本次直接升级方案",
+      "tracking": "live"
+    },
+    {
+      "id": "REF-ANGULAR-WEB",
+      "kind": "project_file",
+      "target": "web/README.md",
+      "purpose": "Angular 版本、构建与迁移说明",
+      "tracking": "live"
+    },
+    {
+      "id": "REF-ANGULAR-E2E",
+      "kind": "project_file",
+      "target": "web/e2e/editor.spec.ts",
+      "purpose": "临时 LittleLoop 浏览器回归",
       "tracking": "live"
     }
   ],

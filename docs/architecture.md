@@ -9,9 +9,10 @@
 | 应用服务 | tools/singularity_core/service.py | 批量 put/delete、角色与依据、整批验证 |
 | 查询分析 | tools/singularity_core/query.py | 上下文、影响、树投影、引用诊断、描述缺口 |
 | CLI | tools/singularity.py | 参数与 JSON 输入输出，调用公共核心 |
-| 浏览器 | tools/singularity_web.py | 只读模型预览和 GET /api/model |
+| Web API | tools/singularity_web.py | 本机 HTTP、Angular 静态产物、模型读取、事务保存和上下文查询 |
+| 前端 | web/src/app | Angular standalone 组件、动态表单、树编辑、Canvas 与 HttpClient 服务 |
 
-Python 3.11+，无第三方运行依赖。TOML、旧 Angular 页面与旧数据模型退出当前架构。浏览器使用 textContent 显示不可信文本；不直接渲染 HTML。完整图形编辑器之后通过同一应用服务接入。
+Python 3.11+，后端无第三方运行依赖。前端使用 Angular 22.2.6、CLI/build 22.2.7，Node 仅用于构建和开发；生产由 Python 提供 web/dist/editor/browser。Angular 模板转义显示文本，不直接渲染模型中的 HTML。网页通过同一应用服务保存，保留 revision 冲突、编辑 token 与人工依据检查。此次恢复的是适配 format 3 的 Angular 前端，不恢复旧 TOML 页面和数据。
 
 ## 当前存储决策
 

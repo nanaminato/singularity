@@ -3,7 +3,10 @@ from pathlib import Path
 
 root = Path(SPECPATH).parent
 tools = root / "tools"
-assets = [(str(tools / "editor"), "editor")]
+editor = root / "web" / "dist" / "editor" / "browser"
+if not (editor / "index.html").is_file():
+    raise RuntimeError("Build the Angular editor first: cd web && npm ci && npm run build")
+assets = [(str(editor), "editor")]
 
 launcher = Analysis([str(root / "open-editor.pyw")], pathex=[str(tools)], datas=assets)
 cli = Analysis([str(tools / "singularity.py")], pathex=[str(tools)], datas=assets)

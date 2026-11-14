@@ -1,6 +1,8 @@
 :root { color-scheme: light; font: 13px/1.45 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif; color: #263342; background: #edf0f4; }
 * { box-sizing: border-box; }
 body { margin: 0; }
+app-root, editor-field { display:block; }
+editor-canvas { display:block; min-width:0; }
 header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid #d5dde7; background:#fff; }
 header span { color:#688095; font-size:11px; }
 h1 { margin:2px 0 0; font-size:18px; font-weight:600; }

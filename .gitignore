@@ -7,4 +7,7 @@ Thumbs.db
 __pycache__/
 web/node_modules/
 web/.angular/
+web/dist/
+web/test-results/
+web/playwright-report/
 .windows-build/

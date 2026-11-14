@@ -54,6 +54,8 @@ check-refs 返回 exists/missing/matched/changed/outside_project/unreadable/unch
 
 ## 浏览器和打包
 
+先在 `web` 执行 `npm ci` 和 `npm run build` 构建 Angular 前端。前端开发、版本要求和浏览器测试见 [web/README.md](../web/README.md)。
+
 ```powershell
 python tools/singularity.py --project ../littleloop serve --open
 ```

@@ -1,9 +1,12 @@
 """Local format 3 project editor."""
 import json
 import secrets
+import mimetypes
+import sys
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 from singularity_core import Store, apply
 from singularity_core.model import AUTH, DELIVERY, VERIFICATION, RELATIONS, TREES, TYPES
@@ -15,9 +18,8 @@ def serve_editor(project, port=8765, open_browser=False, on_ready=None):
     store = Store(project)
     store.read()
     token = secrets.token_urlsafe(32)
-    assets = Path(__file__).resolve().parent / 'editor'
-    files = {'/universe.js': ('universe.js', 'text/javascript'),'/tree.js': ('tree.js', 'text/javascript'), '/': ('index.html', 'text/html'), '/editor.js': ('editor.js', 'text/javascript'),
-             '/editor.css': ('editor.css', 'text/css')}
+    assets = (Path(sys._MEIPASS) / 'editor' if getattr(sys, 'frozen', False)
+              else Path(__file__).resolve().parent.parent / 'web' / 'dist' / 'editor' / 'browser').resolve()
 
     class Handler(BaseHTTPRequestHandler):
         def respond(self, code, body, mime='application/json'):
@@ -40,18 +42,31 @@ def serve_editor(project, port=8765, open_browser=False, on_ready=None):
             if not self.allowed():
                 return
             try:
-                if self.path in files:
-                    name, mime = files[self.path]
-                    self.respond(200, (assets / name).read_bytes(), mime)
-                elif self.path == '/api/model':
+                path = unquote(urlsplit(self.path).path)
+                if path == '/favicon.ico':
+                    self.respond(204, b'', 'image/x-icon')
+                elif path == '/api/model':
                     model, revision = store.read()
                     self.respond(200, dict(model=model, revision=revision, token=token,
                         trees={v['id']: tree(model, v['id'])['rows'] for v in model['views']},
                         schema=dict(types=TYPES, relations=list(RELATIONS), views=list(TREES),
                             authorization=sorted(AUTH), delivery=sorted(DELIVERY),
                             verification=sorted(VERIFICATION))))
-                else:
+                elif path.startswith('/api/'):
                     self.respond(404, {'error': 'Not found'})
+                else:
+                    requested = assets / ('index.html' if path == '/' else path.lstrip('/'))
+                    resolved = requested.resolve()
+                    if not resolved.is_relative_to(assets):
+                        self.respond(404, {'error': 'Not found'})
+                    elif not (assets / 'index.html').is_file():
+                        self.respond(503, {'error': 'Angular editor is not built. Run: cd web && npm ci && npm run build'})
+                    elif not resolved.is_file():
+                        self.respond(404, {'error': 'Not found'})
+                    else:
+                        mime = {'.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html'}.get(
+                            resolved.suffix, mimetypes.guess_type(resolved.name)[0] or 'application/octet-stream')
+                        self.respond(200, resolved.read_bytes(), mime)
             except (OSError, ValueError) as error:
                 self.respond(400, {'error': str(error)})
 

@@ -21,4 +21,4 @@ python -m unittest discover -s tests -v
 
 每个项目使用 `.singularity/model.json` 保存类型定义、节点、关系、引用和视图。模型描述如何构建项目，不承担被描述系统的运行时数据存储。
 
-双击 `open-editor.pyw` 选择项目，打开本地工作台。支持三种树视图、类型字段、关系与文件引用编辑，以及上下文筛选。CLI 与网页共用事务及校验规则。
+网页前端位于 `web`，使用 Angular 22.2.6。首次运行先执行 `cd web`、`npm ci`、`npm run build`，再返回根目录双击 `open-editor.pyw` 选择项目，打开本地工作台。支持三种树视图、类型字段、关系与文件引用编辑，以及上下文筛选。CLI 与网页共用事务及校验规则。开发和打包详见 [前端说明](web/README.md)。

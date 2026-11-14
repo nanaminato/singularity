@@ -1,0 +1,70 @@
+<header><div><span>奇点 / 项目工作台</span><h1 id="project">{{state()?.model?.project?.name || '项目模型'}}</h1></div><button id="reload" (click)="reload()" [disabled]="busy()">重新加载</button></header>
+<p id="status" role="status" [class.error]="error()">{{message()}}</p>
+@if (state(); as snapshot) {
+<main [class.universe-layout]="group==='nodes'" [class.management-layout]="group!=='nodes'" [style.--sidebar-width]="sidebarWidth+'px'">
+  <aside id="sidebar">
+    <label>管理对象<select id="collection" #collection [value]="group" (change)="switchGroup($any(collection.value),collection)" [disabled]="busy()">@for (item of groups; track item[0]) {<option [value]="item[0]">{{item[1]}}</option>}</select></label>
+    @if (group==='nodes') {<label>节点浏览方式<select id="tree" [(ngModel)]="viewId" [disabled]="busy()"><option value="">系统组成（全部节点）</option>@for(v of model.views; track v.id) {<option [value]="v.id">{{v['title']}} · {{v['kind']}}</option>}</select></label>}
+    <label>搜索<input id="search" type="search" [(ngModel)]="search" placeholder="名称、ID 或正文"></label>
+    <button id="create" (click)="create()" [disabled]="busy()">新建{{group==='nodes'?'节点':group==='relations'?'关系':group==='references'?'引用':'视图'}}</button>
+    <small id="object-count">{{visibleRows.length}} / {{model[group].length}}</small>
+    <ul id="items">@for(row of visibleRows; track row.id) {
+      <li [style.margin-left.px]="Math.min(row.depth,12)*12" [class.object-row]="group!=='nodes'" [draggable]="group==='nodes' && !!viewId" (dragstart)="dragStart($event,row.id)" (dragend)="dragged=undefined;dropTarget=''" (dragover)="dragOver($event,row.id)" (dragleave)="dropTarget=''" (drop)="drop($event,row.id)" [attr.data-drop]="dropTarget===row.id ? dropMode : null">
+        @if(group==='nodes') {<button class="tree-toggle" [disabled]="!hasChildren(row.id)" [attr.aria-expanded]="!collapsed.has(viewId+row.id)" [attr.aria-label]="'展开或折叠 '+title(row.item)" (click)="toggle(row.id)"></button>}
+        <button [class.tree-label]="group==='nodes'" [attr.aria-current]="original?.id===row.id" [title]="title(row.item)" (click)="choose(row.item)">@if(group==='nodes') {<span class="folder-icon" aria-hidden="true"></span>}{{title(row.item)}}@if(group!=='nodes') {<small>{{detail(row.item)}}</small>}</button>
+        @if(group==='nodes') {<button class="tree-add" [attr.aria-label]="'添加子节点到 '+title(row.item)" (click)="create(row.id)" [disabled]="busy()">+</button>}
+      </li>
+    }</ul>
+    <div id="sidebar-resize" role="separator" tabindex="0" aria-label="调整左栏宽度" aria-orientation="vertical" [attr.aria-valuenow]="sidebarWidth" aria-valuemin="200" [attr.aria-valuemax]="maxSidebarWidth" (pointerdown)="resizeStart($event)" (pointermove)="resizeMove($event)" (lostpointercapture)="resize=undefined" (keydown)="resizeKey($event)"></div>
+  </aside>
+  @if(group==='nodes') {
+    <editor-canvas [model]="model" [rows]="rows" [kind]="kind" [activeId]="original?.id || ''" [search]="search" [disabled]="busy()" [relations]="snapshot.schema.relations" (selected)="openNode($event)"></editor-canvas>
+  } @else {
+    <section id="object-links" class="object-preview" aria-label="对象预览">
+      <div class="preview-toolbar"><h3>结构预览</h3><label>主题位置<select [(ngModel)]="previewAlignment"><option value="center">居中</option><option value="top-left">左上</option></select></label></div>
+      <div class="preview-body" [attr.data-align]="previewAlignment"><div>
+        @if(!original) {<p class="preview-empty">从左侧选择一个对象查看结构</p>}
+        @if(original && group==='references') {<div class="preview-file">{{original['target']}}<small>{{previewRows.length}} 个节点使用</small></div>}
+        @if(original && group==='relations') {<p>{{names[original['type']] || original['type']}}</p>}
+        <ng-template #branches let-parent>
+          @for(row of previewChildren(parent); track row.id) {
+            <li><button class="preview-node" (click)="openNode(row.id)">{{name(row.id)}}<small>{{row.id}}</small></button>
+              @if(previewChildren(row.id).length) {<ul><ng-container *ngTemplateOutlet="branches;context:{$implicit:row.id}"></ng-container></ul>}
+            </li>
+          }
+        </ng-template>
+        <ul class="preview-tree"><ng-container *ngTemplateOutlet="branches;context:{$implicit:null}"></ng-container></ul>
+      </div></div>
+    </section>
+  }
+  <section id="inspector">
+    <nav id="forest-navigation">@for(item of navigation; track item.id) {<button (click)="openNode(item.id)">{{item.label}}</button>}</nav>
+    <h2>{{heading}}</h2>
+    @if(original || creating) {
+      <form id="editor" (submit)="$event.preventDefault();save()" [attr.inert]="busy() ? '' : null">
+        @if(childParent) {<p>添加子节点到 {{name(childParent)}}</p>}
+        <div id="fields">@for(field of fields; track field.key) {
+          @if(field.key==='roots') {
+            <fieldset class="root-picker"><legend>根节点</legend><input type="search" aria-label="筛选根节点" placeholder="筛选根节点" [(ngModel)]="rootSearch" [ngModelOptions]="{standalone:true}"><div class="root-options">
+              @for(choice of field.choices; track choice[0]) {<label class="root-option" [hidden]="!choice[1].toLowerCase().includes(rootSearch.toLowerCase())"><input type="checkbox" [checked]="field.value.includes(choice[0])" (change)="toggleRoot(choice[0],$any($event.target).checked)">{{choice[1]}}</label>}
+            </div></fieldset>
+          } @else {<editor-field [field]="field" (changed)="changed(field)"></editor-field>}
+        }
+        @if(attributes.length) {<fieldset><legend>类型字段</legend>@for(field of attributes; track field.key) {<editor-field [field]="field" prefix="attribute" (changed)="dirty=true"></editor-field>}</fieldset>}
+        @if(group==='references') {<p class="field-help">固定版本需填写版本标识或 SHA-256 摘要。外部文件使用绝对路径，项目内文件使用相对路径。</p>}
+        </div>
+        <div class="actions"><button type="submit">保存</button>@if(original) {<button type="button" id="delete-object" (click)="confirmDelete()">删除</button>}</div>
+        @if(deleteMessage) {<div><p>{{deleteMessage}}</p>@if(!deleteBlocked) {<button type="button" (click)="save(true)">确认删除</button>}<button type="button" (click)="deleteMessage=''">取消</button></div>}
+      </form>
+    }
+    @if(group==='nodes' && original) {
+      <details id="context"><summary>上下文查询</summary><form id="query" (submit)="$event.preventDefault();query()">
+        <label>遍历深度<input type="number" min="0" max="100" required name="depth" [(ngModel)]="depth"></label>
+        <label>沿哪些关系遍历<select multiple size="5" name="edges" [(ngModel)]="edgeFilter">@for(type of snapshot.schema.relations; track type) {<option [value]="type">{{names[type] || type}}</option>}</select></label>
+        <label>显示哪些节点类型<select multiple size="5" name="types" [(ngModel)]="typeFilter">@for(type of types; track type) {<option [value]="type">{{type}}</option>}</select></label>
+        <p>未选择时包含全部。节点类型只筛选结果，中间节点仍可用于遍历。</p><button [disabled]="busy()">查询</button>
+      </form>@if(result(); as data) {<p>显示 {{data.matches.length}} 个节点，遍历 {{data.visited}} 个节点</p><ul>@for(node of data.matches; track node.id) {<li><button (click)="openNode(node.id)">{{node['title']}} · {{node.id}}</button></li>}</ul><details><summary>遍历依据</summary><ul>@for(reason of data.reasons; track $index) {<li>{{reason['from']}} · {{reason['relation']}} · {{reason['type']}} · {{reason['to']}}</li>}</ul></details>}</details>
+    }
+  </section>
+</main>
+}
