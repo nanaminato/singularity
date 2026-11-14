@@ -4,7 +4,7 @@
 
 Status: Proposed
 
-Derived from: [MS-001–MS-010](../../protocol/meta-singularities.md) (Candidate).
+Derived from: [MS-001–MS-010](../singularities/) (Candidate).
 
 Decision: Publish a Markdown-first draft with six concepts, grouped stable IDs, optional regions, a short project entry, and two illustrative examples.
 
@@ -22,8 +22,18 @@ Impact of meta changes: Reevaluate SPEC, lifecycle, relation semantics, Agent in
 
 Status: Proposed
 
-Derived from: [MS-003, MS-004](../../protocol/meta-singularities.md) (Candidate).
+Derived from: [MS-003, MS-004](../singularities/) (Candidate).
 
 Decision: Keep initial meta singularities as Candidate and mark the derived specification Draft. Label example confirmations as fictional.
 
 Reason: A request to create a repository from a discussion authorizes this artifact, but does not provide explicit approval of every proposed axiom. The resulting draft remains concrete and reviewable.
+
+## D-PROTOCOL-003
+
+Status: Proposed
+
+Derived from: [MS-003, MS-004, MS-007, MS-008, MS-010](../singularities/) (Candidate).
+
+Decision: Use format 2 TOML for project and meta singularities. The CLI and Angular editor record the actor as Human or AI. Human decisions authorize confirmation, changes to confirmed statements, and retirement. Keep retired records as Retired or remove their files. Git retains committed history.
+
+Anchors: [CLI and editor](../../tools/README.md), [Specification](../../SPEC.md).

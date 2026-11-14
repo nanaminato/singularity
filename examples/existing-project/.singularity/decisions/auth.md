@@ -6,7 +6,7 @@ Example only; no implementation or tests have run.
 
 Status: Active
 
-Derived from: [S-AUTH-001, S-AUTH-002](../singularities/auth.md).
+Derived from: [S-AUTH-001, S-AUTH-002](../singularities/).
 
 Decision: Delegate Linux credential verification through a PAM integration boundary instead of storing a duplicate password database.
 
@@ -20,7 +20,7 @@ Verification: Pending real implementation and platform-specific tests.
 
 Status: Proposed
 
-Derived from: [S-PRIV-001](../singularities/auth.md) (Candidate).
+Derived from: [S-PRIV-001](../singularities/) (Candidate).
 
 Decision: Investigate action-specific helper authorization before proposing a permission change.
 

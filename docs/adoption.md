@@ -5,7 +5,8 @@
 ## 1. 获取固定版本
 
 ```sh
-git clone --branch v0.1.0 https://github.com/nanaminato/singularity.git singularity-protocol
+git clone https://github.com/nanaminato/singularity.git singularity-protocol
+git -C singularity-protocol checkout "已采用的提交哈希"
 ```
 
 目录位置由你选择。不要把协议仓库克隆进目标项目已经使用的 `.singularity` 目录。
@@ -20,7 +21,7 @@ git clone --branch v0.1.0 https://github.com/nanaminato/singularity.git singular
 
 ## 3. 配置版本与范围
 
-编辑 [config 模板](../templates/project/.singularity/config.md)，保留明确的 `0.1.0` 来源。用人明确选择的区域替换未选择范围，例如“Linux 登录相关路径，其他模块未建模”。
+编辑 [config 模板](../templates/project/.singularity/config.md)，记录所采用的 `0.3.0` 草案提交。用人明确选择的区域替换未选择范围，例如“Linux 登录相关路径，其他模块未建模”。
 
 小项目可省略 Region。大型项目按 [region 模板](../templates/region.md) 登记搜索范围和少量入口；Includes 不是读取整个目录的任务单。
 
@@ -28,13 +29,15 @@ git clone --branch v0.1.0 https://github.com/nanaminato/singularity.git singular
 
 ## 4. 从一个任务开始
 
+Windows 用户可以双击协议 checkout 中的 [open-editor.pyw](../open-editor.pyw)，选择目标项目根目录，在网页创建或编辑 TOML 记录。提交记录后，可以按稳定 ID 查看 Git 历史。
+
 可以直接给 Agent：
 
 > 从今天开始将登录模块纳入奇点管理。先读取入口和必要测试，给出少量无法安全推导的候选意图；现有代码仅作证据，不进行全仓库导入。可推导的实现选择请自行处理。
 
 候选应该说明“不确定的意图是什么、已有证据是什么、为什么需要人决定”。候选数量不设机械 KPI；不需要人的选择时可以为零。
 
-人确认后，Agent 保存准确的确认依据。若用户任务已明确给出约束，无需再确认同一句话。仅从代码发现的行为保持 Candidate，不能借此制造 Confirmed。
+人确认后，将记录标记为 Confirmed，操作者标记为 Human。用户在当前任务中明确给出的约束可直接采用。仅从代码发现的行为保持 Candidate。
 
 ## 5. 继续正常开发
 

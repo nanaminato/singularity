@@ -1,0 +1,5 @@
+format = 2
+id = "MS-004"
+status = "Candidate"
+actor = "AI"
+statement = "An agent must not silently change the meaning of a confirmed singularity."

@@ -1,12 +1,12 @@
 # Minimal：Todo 意图变更演练
 
-这是一个**虚构的文档项目**，用来演示如何记录和修改意图；没有可运行 Todo 应用，也没有声称测试已经执行。所有 Confirmed 及确认依据仅在教学场景中有效，不能复制到真实项目后继续视为已确认。
+这是一个**虚构的文档项目**，用来演示如何记录和修改意图。所有 Confirmed 和 Human 标记均来自教学场景。
 
 入口：[.singularity/README.md](.singularity/README.md)。
 
 ## 初始情况
 
-人明确给出六条意图，保存在 [todo.md](.singularity/singularities/todo.md)：Todo 属于 Workspace、多用户、Owner 修改、Observer 只读、重启保留数据、临时断网保留编辑状态。
+人明确给出六条意图，保存在 [TOML 奇点记录](.singularity/singularities/)：Todo 属于 Workspace、多用户、Owner 修改、Observer 只读、重启保留数据、临时断网保留编辑状态。
 
 Agent 可自行选择持久化技术、接口、UI 和测试策略；重要选择记录在 [decisions/todo.md](.singularity/decisions/todo.md)。不要把数据库品牌或类结构升级为奇点。
 

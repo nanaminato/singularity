@@ -1,8 +1,8 @@
 # Configuration
 
-Protocol version: 0.1.0
+Protocol version: 0.3.0
 
-Protocol source: [local draft](../../../SPEC.md); distribution pin: v0.1.0.
+Protocol source: [local draft](../../../SPEC.md).
 
 Adoption scope: Auth entry points and task-specific dependencies only.
 
@@ -12,4 +12,4 @@ Unmodeled areas: Billing, Frontend, Legacy except necessary boundary evidence.
 
 Region: regions/auth.md
 
-Intent records: singularities/auth.md
+Intent records: singularities/

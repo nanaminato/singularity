@@ -1,0 +1,5 @@
+format = 2
+actor = "Human"
+id = "S-TODO-006"
+status = "Confirmed"
+statement = "Temporary network interruption must not destroy the user's current editing state."

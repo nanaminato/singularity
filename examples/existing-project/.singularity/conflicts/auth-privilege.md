@@ -3,7 +3,7 @@
 Status: Open (fictional scenario)
 
 Related singularities / evidence:
-- [S-PRIV-001](../singularities/auth.md) (Candidate)
+- [S-PRIV-001](../singularities/) (Candidate)
 - [E-BOUNDARY-002](../evidence.md): current service-account restriction
 
 Conflict: The proposed administrator behavior differs from the fictional helper's current service-account-only behavior. This is a candidate-versus-evidence mismatch, not a contradiction between two Confirmed singularities.

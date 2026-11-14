@@ -3,7 +3,7 @@
 本仓库用协议描述协议自身。
 
 - 版本及边界：[config.md](config.md)
-- 唯一的元奇点记录：[protocol/meta-singularities.md](../protocol/meta-singularities.md)
+- 元奇点记录：[singularities/](singularities/)
 - 当前推导：[D-PROTOCOL-001](decisions/protocol.md)
 - 实验验证：[docs/experiments.md](../docs/experiments.md)
 

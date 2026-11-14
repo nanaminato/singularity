@@ -1,6 +1,6 @@
 # Singularity Protocol
 
-This repository develops Singularity Protocol 0.1 as a Markdown-first draft.
+This repository develops Singularity Protocol 0.3 as a Markdown-first draft with TOML tooling.
 
 Read `.singularity/README.md`, then relevant meta singularities and records.
 

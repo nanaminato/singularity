@@ -6,13 +6,13 @@ Status: Draft · Derived from MS-001, MS-003, MS-004, MS-006, MS-010.
 
 ```text
 发现不可安全推导的意图 → Candidate
-Candidate → Confirmed    人明确确认，保留确认依据
+Candidate → Confirmed    人明确确认，标记 Human
 Candidate → Rejected     人拒绝或候选已合并，保留处置原因
 Confirmed → Confirmed    人明确改义，保留历史并重评影响
-Confirmed → Retired      人明确退役，保留历史并重评影响
+Confirmed → Retired      人明确退役，标记已移除或删除记录文件，重评影响
 ```
 
-退役 ID 不复用。重新启用旧意图需要人的明确决定，保留过程记录。没有规定统一审批表单；当前会话已经明确的意图就是有效依据。Agent 的猜测、来源代码或测试通过不是依据。
+拒绝保留原记录，退役可选择保留或删除记录。Git 保存已提交的此前版本，终态 ID 不复用。操作者标记为 Human 或 AI。重新启用旧意图需要人的明确决定。
 
 ## 当前任务工作流
 
@@ -21,7 +21,7 @@ Confirmed → Retired      人明确退役，保留历史并重评影响
 3. 可安全推导的选择形成 Derived Decision，并继续工作。
 4. 无法安全推导的信息形成少量 Candidate，附需要人选择的具体问题。
 5. 对尚未明确的选择，等待人回应；可以同时完成独立工作。
-6. 收到明确确认后登记依据，分析影响，实施并验证。
+6. 收到明确确认后标记 Human，分析影响，实施并验证。
 7. 汇报意图满足情况、受影响旧决策与实际验证范围。
 
 例如用户明确要求“Observer 只能查看，不能修改”时，可以直接据此记录 Confirmed，不应再把同一句约束当作待批准候选。

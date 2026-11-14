@@ -5,7 +5,7 @@ Read [config.md](config.md) for the pinned protocol and adoption boundary.
 1. Find only the intent records relevant to the current request.
 2. Read related entry points and evidence, expanding context only as needed.
 3. Derive implementation choices. Ask only about intent that cannot safely be derived and has not already been explicitly given.
-4. Candidates remain Candidate until explicit human confirmation; record its basis.
+4. Candidates remain Candidate until explicit human confirmation. Mark that action Human.
 5. Expose conflicts; continue independent work while the affected part waits.
 6. After an intent change, reevaluate affected decisions, implementation, tests, documentation, and environment.
 

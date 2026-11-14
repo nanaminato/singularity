@@ -8,7 +8,7 @@
 
 [Auth Region](.singularity/regions/auth.md) 限定初始搜索范围，提供少量入口。它不要求扫描所有 Auth 文件，更不要求导入其他模块。
 
-[auth.md](.singularity/singularities/auth.md) 中的两条 Confirmed 假设是教学场景里人明确给出的登录意图。数据库、类结构与 API 不由这些记录指定。
+[TOML 奇点记录](.singularity/singularities/) 中的两条 Confirmed 假设是教学场景里人明确给出的登录意图。数据库、类结构与 API 不由这些记录指定。
 
 ## 当前任务跨越边界
 
@@ -17,7 +17,7 @@
 1. 把调用登记为 Boundary Observation，即 [evidence.md](.singularity/evidence.md) 中的证据。
 2. 只看 ExecuteAsUser 的当前调用及限制，按需扩展一跳。
 3. 不把整个 Legacy 自动纳入管理。
-4. 发现服务账号限制与拟议行为不一致，提出 [Candidate](.singularity/singularities/auth.md) 和 [Conflict](.singularity/conflicts/auth-privilege.md)。
+4. 发现服务账号限制与拟议行为不一致，提出 [Candidate](.singularity/singularities/S-PRIV-001.toml) 和 [Conflict](.singularity/conflicts/auth-privilege.md)。
 5. 人决定之前，继续独立的登录文档或调查工作；不实现依赖尚未确认权限选择的部分。
 
 候选不是事实真理。人可能选择保留服务账号限制、明确扩大权限、认定旧实现是 Bug，或者推迟任务。已有明确授权时使用它，不能为了形式重复审批。

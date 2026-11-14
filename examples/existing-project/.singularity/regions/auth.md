@@ -11,7 +11,7 @@ Entry points:
 - src/Auth/LoginController.cs :: Login
 
 Related singularities:
-- [S-AUTH-001, S-AUTH-002](../singularities/auth.md)
+- [S-AUTH-001, S-AUTH-002](../singularities/)
 
 The paths narrow initial search. They do not require reading the entire directory.
 A reference to PrivilegeHelper warrants only enough external context to resolve the current task.

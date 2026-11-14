@@ -1,8 +1,8 @@
-# Singularity Protocol 0.1.0
+# Singularity Protocol 0.3.0
 
 Status: Draft
 
-Derived from: [MS-001–MS-010](protocol/meta-singularities.md), currently Candidate.
+Derived from: [MS-001–MS-010](.singularity/singularities/), currently Candidate.
 
 本规范描述可由现有 Agent 读取的数据语义，不规定具体 Agent、框架或存储引擎。**MUST / MUST NOT** 表示协议要求，**SHOULD** 表示允许有理由地偏离的默认行为，**MAY** 表示可选。确认元奇点之前，本文件是拟议规范。
 
@@ -21,7 +21,7 @@ Candidate、Boundary Observation 和影响分析是上述概念的状态或记�
 
 ## Singularity
 
-一个奇点 MUST 有三个字段：**稳定 ID、状态、意图陈述**。原因、确认依据、锚点与关系 MAY 按需补充，不强制大 Schema。
+奇点记录 MUST 包含稳定 ID、状态、意图陈述和最近操作者（`Human` 或 `AI`）。原因、锚点与关系可按需补充。
 
 ```markdown
 ## S-AUTH-001
@@ -37,10 +37,11 @@ Reason: Avoid maintaining a duplicate operating-system password database.
 - 文件不是身份。一个文件 MAY 保存多个奇点，移动文件不改变 ID。
 - 活跃状态为 `Candidate`、`Confirmed`；终态为 `Rejected`、`Retired`。
 - 只有人的明确意图可以确认、改变或退役 Confirmed。Agent MUST NOT 从测试通过、代码存在、沉默或过去时间推断批准。
-- 人在当前任务中明确给出的约束可以作为确认依据，无需机械地要求再次确认。
-- Agent MUST 保存可定位的确认依据，例如日期与准确的用户陈述；不必复制完整聊天或个人信息。
+- 人在当前任务中明确作出的决定可以直接执行。确认、修改已确认陈述和退役时记录操作者 `Human`。操作者字段是角色标记，授权来自人的决定。
 - 已确认记录改变含义时 MUST 保留旧含义的可追溯历史，并记录影响重评。使用 Git 历史即可，不要求额外版本字段。
 - 候选 MAY 被合并、改写、拒绝；其 ID 仍应保留处置记录。
+- 拒绝候选时 MUST 保留 ID、陈述与拒绝原因。退役时可保留标记为 `Retired`（已移除）的记录，也可删除记录文件。删除后仍应避免复用原 ID。
+- 已提交的记录变更和移除可通过 Git 历史追溯。
 
 现有证据与已确认意图不一致时，MUST 披露。证据可能是 Bug、旧行为或潜在意图，Agent 不能自行把它宣布为新奇点。
 
@@ -88,6 +89,10 @@ Conflict SHOULD 包含相关 ID / 证据、具体矛盾、受阻部分和待决�
 
 不同协议版本、项目指令或已确认意图有冲突时，Agent MUST 披露并依据当前会话已有的人类授权处理；本协议不替代运行环境的系统规则或安全约束。
 
-## 0.1 的限制
+## 工具格式与限制
+
+工具记录采用 `format = 2` 的 TOML，每份文件对应一个稳定 ID，`actor` 记录最近操作者。字段与工具用法见 [工具文档](tools/README.md)。
+
+工具可从 Git 按稳定 ID 展示字段及文件路径的历史变化。文件名不参与身份匹配。历史展示已提交记录，工作树变化单独用于影响分析。
 
 Markdown 不提供自动解析、权限强制、语义冲突检测或影响范围完整性保证。关系由 Agent 和人按需维护。实现协议不等于证明理论有效，实验方法见 [docs/experiments.md](docs/experiments.md)。

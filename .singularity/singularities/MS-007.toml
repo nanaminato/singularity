@@ -1,0 +1,5 @@
+format = 2
+id = "MS-007"
+status = "Candidate"
+actor = "AI"
+statement = "Singularity adoption is incremental."

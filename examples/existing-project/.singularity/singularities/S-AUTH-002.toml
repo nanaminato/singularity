@@ -1,0 +1,5 @@
+format = 2
+actor = "Human"
+id = "S-AUTH-002"
+status = "Confirmed"
+statement = "Authentication must not require this product to maintain a duplicate operating-system password database."

@@ -1,0 +1,5 @@
+format = 2
+id = "MS-002"
+status = "Candidate"
+actor = "AI"
+statement = "Information that can be safely derived should not become a singularity."

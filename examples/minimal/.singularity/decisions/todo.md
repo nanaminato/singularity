@@ -6,7 +6,7 @@ These Active decisions are illustrative, not implemented or tested.
 
 Status: Active
 
-Derived from: [S-TODO-003, S-TODO-004](../singularities/todo.md).
+Derived from: [S-TODO-003, S-TODO-004](../singularities/).
 
 Decision: Enforce role checks at the service write boundary; reject Observer create, modify, and delete operations. UI reflects the same allowed actions.
 
@@ -18,7 +18,7 @@ Verification: Pending real implementation. Test each action for Owner and Observ
 
 Status: Active
 
-Derived from: [S-TODO-005, S-TODO-006](../singularities/todo.md).
+Derived from: [S-TODO-005, S-TODO-006](../singularities/).
 
 Decision: Persist saved data durably; preserve unsent editing state locally across temporary disconnection. Choose storage and synchronization details from actual project evidence.
 

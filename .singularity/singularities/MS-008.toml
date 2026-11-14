@@ -1,0 +1,5 @@
+format = 2
+id = "MS-008"
+status = "Candidate"
+actor = "AI"
+statement = "An agent should use the minimum project context necessary for the current task."
