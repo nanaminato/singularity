@@ -1,98 +1,124 @@
-# Singularity Protocol 0.3.0
+# Singularity Project Model 0.4
 
-Status: Draft
+Status: Implemented core, evolving specification. Storage format: 3.
 
-Derived from: [MS-001–MS-010](.singularity/singularities/), currently Candidate.
+本规范是项目构建描述模型。人类关键意图称为奇点；其他节点承载可推导、可验证、可重评的工程内容。结构化模型不能自动证明实现正确，也不能代替人类授权。
 
-本规范描述可由现有 Agent 读取的数据语义，不规定具体 Agent、框架或存储引擎。**MUST / MUST NOT** 表示协议要求，**SHOULD** 表示允许有理由地偏离的默认行为，**MAY** 表示可选。确认元奇点之前，本文件是拟议规范。
+## 1. 项目快照
 
-## 六个概念
+项目根目录的 `.singularity/model.json` 为单个 UTF-8 JSON 对象：
 
-| 概念 | 含义 | 权威性 |
-| --- | --- | --- |
-| Singularity | 无法安全推导、需人控制的意图 | 只有 Confirmed 具有意图权威性 |
-| Region | 可选的初始搜索边界与入口 | 不产生额外意图 |
-| Derived Decision | 为满足上游意图而选择的实现或流程 | 可由 Agent 重评 |
-| Evidence | 代码、测试、历史、文档、用户陈述等可定位事实 | 不是自动确认 |
-| Relation | 记录之间、记录与证据之间的联系 | 不自动传递确认状态 |
-| Conflict | 意图之间或意图与证据之间的不一致 | 需明确披露 |
-
-Candidate、Boundary Observation 和影响分析是上述概念的状态或记录用途，不是额外的基础概念。
-
-## Singularity
-
-奇点记录 MUST 包含稳定 ID、状态、意图陈述和最近操作者（`Human` 或 `AI`）。原因、锚点与关系可按需补充。
-
-```markdown
-## S-AUTH-001
-
-Status: Candidate
-
-Statement: Linux authentication uses the operating system PAM stack.
-
-Reason: Avoid maintaining a duplicate operating-system password database.
+```json
+{"format":3,"project":{"id":"PROJECT-EXAMPLE","name":"Example"},"types":{},"nodes":[],"relations":[],"references":[],"views":[]}
 ```
 
-- ID 在同一项目中 MUST 唯一，不随文字修订改变，也 MUST NOT 被回收给无关意图。
-- 文件不是身份。一个文件 MAY 保存多个奇点，移动文件不改变 ID。
-- 活跃状态为 `Candidate`、`Confirmed`；终态为 `Rejected`、`Retired`。
-- 只有人的明确意图可以确认、改变或退役 Confirmed。Agent MUST NOT 从测试通过、代码存在、沉默或过去时间推断批准。
-- 人在当前任务中明确作出的决定可以直接执行。确认、修改已确认陈述和退役时记录操作者 `Human`。操作者字段是角色标记，授权来自人的决定。
-- 已确认记录改变含义时 MUST 保留旧含义的可追溯历史，并记录影响重评。使用 Git 历史即可，不要求额外版本字段。
-- 候选 MAY 被合并、改写、拒绝；其 ID 仍应保留处置记录。
-- 拒绝候选时 MUST 保留 ID、陈述与拒绝原因。退役时可保留标记为 `Retired`（已移除）的记录，也可删除记录文件。删除后仍应避免复用原 ID。
-- 已提交的记录变更和移除可通过 Git 历史追溯。
+`format` 必须为整数 3。所有字段必需，未知字段拒绝。项目、节点、关系、引用、视图 ID 在快照内全局唯一，格式为大写字母开头的字母数字分段，以连字符连接。ID 是身份，名称与文件路径不是身份。未来格式变更必须提供明确迁移规则，不能静默解释未知版本。
 
-现有证据与已确认意图不一致时，MUST 披露。证据可能是 Bug、旧行为或潜在意图，Agent 不能自行把它宣布为新奇点。
+快照是当前一致性和事务边界。数组顺序有意义：同一树下子节点按关系数组顺序展示，根按视图 roots 顺序展示。Git 可记录后续文件差异，本轮不实现旧记录历史查询。
 
-## Region 与边界
+## 2. Node
 
-Region MAY 定义 Includes、Entry points、Related singularities。它只缩小初始搜索空间，MUST NOT 被解释为整目录读取任务。没有 Region 的小项目可以直接从相关奇点和任务入口开始。
+必需字段：`id, type, title, body, actor, authorization, delivery, verification, attributes`。
 
-未建模区域是预期状态，MUST NOT 被自动解释为没有约束或可以随意修改。跨边界时，只查看当前任务所需的接口、调用点及证据；发现事实可记录为 Evidence / Boundary Observation，需要人的选择才提出 Candidate。发现依赖不等于把整个模块纳入管理。
+- title、body 是非空字符串；body 可写 Markdown，核心按文本保存，不执行内容。
+- actor 是最后操作者角色 Human/AI，不是身份认证或授权凭证。
+- references 是可选的 Reference ID 数组；悬空引用拒绝。
+- authorization_basis 是确认、拒绝或退役的明确依据文本。
+- verification_basis 是 passed/failed 所需的非空 evidence 节点 ID 数组。
+- attributes 由节点类型定义，未知属性拒绝。
 
-区域内的意图是否适用于外部代码由陈述本身决定，不能靠路径关系默默扩大或缩小其含义。
+### 状态独立
 
-## Derived Decision
+| 维度 | 值 |
+| --- | --- |
+| authorization | candidate / confirmed / rejected / retired / not_applicable |
+| delivery | planned / in_progress / implemented / abandoned / not_applicable |
+| verification | unverified / passed / failed / stale / not_applicable |
 
-重要决策 SHOULD 有稳定 ID、上游引用、Decision、Reason。无需记录每个变量名或机械操作。
+intent、constraint、non_goal 不得用 not_applicable 授权状态。确认不意味着已实现；实现不意味着验证通过。passed/failed 只表示作者根据关联证据作出的声明，核心验证证据链接存在，不审核实验真实性。支持把过期结论标记为 stale；本轮影响分析输出重评线索，不自动改写下游状态。
 
-- 上游 SHOULD 引用奇点 ID；只有候选上游时，必须标明 `Proposed`，不得声称已经获准。
-- 决策 MAY 调整，不需要为可安全推导的实现重复索取批准。
-- 被替代的决策 SHOULD 标记 `Superseded` 并链接替代者，保留推导历史。
-- 意图变更后，Agent MUST 重评受影响决策，不能沿用旧结论而不检查前提。
+AI 新建节点默认应使用 candidate 或 not_applicable，不得从文档或代码自动确认意图。服务对新确认、拒绝、退役，以及修改/删除已有 confirmed、retired 节点要求 Human 和非空 basis。一般工程节点可由 AI 更新。Human 角色标记由可信调用者根据实际会话授权填写；本地文件不是权限隔离系统。
 
-## Evidence、Relation 与 Conflict
+### 内置类型与必需属性
 
-证据 SHOULD 指向文件、符号、测试或可定位陈述，并区分观察事实与推测。过期锚点应刷新，不能视为当前事实。最小关系写法和冲突处理见 [relations](protocol/relations.md) 与 [lifecycle](protocol/lifecycle.md)。
+| 类型 | attributes 必需字段 |
+| --- | --- |
+| goal, intent, constraint, non_goal | 无 |
+| capability, scenario, requirement | 无 |
+| acceptance | criterion: string |
+| system, module, region | 无 |
+| interface | inputs: array, outputs: array |
+| data_contract | fields: object |
+| workflow | steps: array |
+| state_machine | states: array, transitions: array |
+| decision | rationale: string |
+| alternative, assumption, question | 无 |
+| task, artifact, test | 无 |
+| experiment | baseline: string, metrics: array |
+| evidence | observation: string |
+| conflict | issue: string |
 
-Conflict SHOULD 包含相关 ID / 证据、具体矛盾、受阻部分和待决定问题。Agent MUST 暴露冲突，不得默默选择、删除约束或将实现当作更高权威。只暂停依赖该选择的工作，可继续独立且可逆的工作。
+类型特有字段的第一版校验覆盖必需字段和 JSON 类型，不是任意语言的接口编译器，也不解释流程执行语义。实现提案和规划产物应在 body 明确说明尚未创建。
 
-## 意图变更与影响分析
+### 自定义类型
 
-从改变的意图出发：
+`types` 中可声明 `x_` 前缀的类型，不允许覆盖内置类型。例如：
 
-1. 找到引用它的决策、锚点、测试和区域。
-2. 查看直接相关代码和边界接口。
-3. 证据不足时扩展一跳，记录扩展理由；足够时停止。
-4. 重评架构、实现、测试、文档和环境中的受影响部分。
-5. 验证变更后的意图，并验证相关未改变意图仍成立。
-6. 记录已验证的范围与未知部分；不能把局部通过称为全仓库证明。
+```json
+{"x_budget":{"description":"资源预算","required":{"cpu":"number"},"optional":{"units":"string"}}}
+```
 
-影响分析是一次任务的必要上下文，不要求建立完整项目知识图谱。搜索不到引用也不能证明没有影响，仍须根据实际入口和依赖核查。
+字段类型支持 string、number、boolean、array、object。required 与 optional 不重叠；不支持任意代码、动态导入和自定义执行脚本。更新 schema 和受影响节点应放在同一事务；不满足新 schema 的快照不能保存。更深层 schema、继承和可扩展关系类型为后续版本能力。
 
-## 项目接入与版本
+## 3. Relation
 
-项目 SHOULD 保存短的 `AGENTS.md` 指令入口、`.singularity/README.md`、`config.md` 和必要的意图记录。空目录、Region、决策和冲突文档都可以按需创建。项目 MUST 明确使用的协议版本和可定位来源。
+必需字段：`id, type, source, target`，可选 `rationale`。端点必须为已有节点，不允许自连或重复的 type/source/target 三元组。
 
-协议语义和项目意图 MUST 分开维护。目标项目不必复制完整 SPEC；离线需要时 MAY 缓存固定版本副本，并标明来源与版本。无法读取协议时只能依短入口执行明确可安全完成的工作，不得编造缺失规则。
+| 类型 | source → target 的语义 | 变更影响遍历 |
+| --- | --- | --- |
+| contains | 整体 → 部件 | 正向 |
+| decomposes | 目标 → 子目标/能力 | 正向 |
+| plans | 交付组织 → 工作项 | 正向 |
+| depends_on | 使用者 → 依赖对象 | 反向 |
+| derived_from | 推导结果 → 上游依据 | 反向 |
+| constrains | 约束 → 被约束对象 | 正向 |
+| implements | 实现/任务 → 设计或需求 | 反向 |
+| verifies | 测试/实验/验收 → 验证对象 | 反向 |
+| supports | 证据 → 支持对象 | 正向 |
+| conflicts_with | 冲突双方 | 双向 |
+| supersedes | 新方案 → 旧方案 | 不传播 |
+| references | 一般语义关联 | 不传播 |
 
-不同协议版本、项目指令或已确认意图有冲突时，Agent MUST 披露并依据当前会话已有的人类授权处理；本协议不替代运行环境的系统规则或安全约束。
+verifies 的起点限定 test/experiment/acceptance，supports 的起点限定 evidence。其他关系先执行结构约束，领域适用性由作者审阅。引用关系不会传递确认状态，也不会自动把关联材料提升为意图。
 
-## 工具格式与限制
+context 按关系双向取有限跳数；impact 按上表沿依赖方向取有限跳数并给出原因边。它们不检查代码实际调用，也不保证覆盖整个项目。文件变化检测、Git 基线差分和自动过期传播尚未实现。
 
-工具记录采用 `format = 2` 的 TOML，每份文件对应一个稳定 ID，`actor` 记录最近操作者。字段与工具用法见 [工具文档](tools/README.md)。
+## 4. Reference
 
-工具可从 Git 按稳定 ID 展示字段及文件路径的历史变化。文件名不参与身份匹配。历史展示已提交记录，工作树变化单独用于影响分析。
+必需字段：`id, kind, target, purpose, tracking`。可选 `locator, revision, digest`。
 
-Markdown 不提供自动解析、权限强制、语义冲突检测或影响范围完整性保证。关系由 Agent 和人按需维护。实现协议不等于证明理论有效，实验方法见 [docs/experiments.md](docs/experiments.md)。
+- project_file：项目内相对路径，用 `/`，不得绝对路径或包含 `..`。
+- external_file：绝对路径；跨机器不可移植，优先考虑项目文件或 URL。
+- url：HTTP(S) URL。
+- purpose：引用用途，例如设计依据、实现入口、验证证据。
+- locator：章节、符号等定位描述，当前保存但不解析。
+- tracking=live：跟随当前材料；pinned：必须提供 revision 或 digest。
+- digest：SHA-256 文件摘要。revision：外部材料版本或 Git 提交标识。
+
+check-refs 默认只检查项目文件存在性，有 digest 时比较摘要；`--external` 才检查外部文件。检查不联网、不打开网页、不执行文件、不解析符号、不验证 revision。输出明确标记 locator_checked/revision_checked=false。存在的文件不等于固定版本已验证；模型内 target 的 project_file 解析结果越出项目时标记 outside_project。
+
+## 5. View 与树
+
+必需字段：`id, title, kind, roots`。kind 为 composition/objectives/delivery，分别投影 contains/decomposes/plans 关系。roots 为已有节点 ID 非空数组。
+
+每种树关系单独保证无环、单父级；三种关系可以让相同节点参与不同组织方式。其他关系构成跨树图，依赖环不被自动视为非法。分组和移动不改变节点身份、确认状态或陈述含义。树不是额外复制的一份内容。
+
+## 6. 事务与存储
+
+apply 接受完整对象 put 和显式 delete 的操作数组，可同时增删节点、关系、引用、视图和类型。先在内存应用全部操作，再校验完整快照；删除有悬空关系的节点必须同步处理关系，不做隐式级联删除。dry-run 返回候选快照，不写入。
+
+每次读取返回当前文件字节 SHA-256 revision；写入必须携带 expected。写入时独占创建 model.lock，重新核对 revision，将完整文件写到同目录临时文件、flush/fsync 后 os.replace。失败保留旧快照并清理临时文件。锁只协调遵守协议的写入者，直接修改文件的软件不受锁约束。残留锁需确认写入进程已退出再清理；不自动抢锁。
+
+## 7. 演进边界
+
+每次模型变化由真实项目表达困难驱动；先建立失败样例，再调整模型/工具和相应测试。新格式要明确兼容策略及迁移验收。未建模内容正常存在；不能把图上没有连线当作没有实际依赖。模型可以丰富，人工确认仍集中于关键意图。

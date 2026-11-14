@@ -1,17 +1,7 @@
-# Project Singularity Entry
+# Project model
 
-Read [config.md](config.md) for the pinned protocol and adoption boundary.
+Protocol: Singularity 0.4, format 3.
+Protocol source: configure a fixed source path or Git revision before use.
+Model: [model.json](model.json).
 
-1. Find only the intent records relevant to the current request.
-2. Read related entry points and evidence, expanding context only as needed.
-3. Derive implementation choices. Ask only about intent that cannot safely be derived and has not already been explicitly given.
-4. Candidates remain Candidate until explicit human confirmation. Mark that action Human.
-5. Expose conflicts; continue independent work while the affected part waits.
-6. After an intent change, reevaluate affected decisions, implementation, tests, documentation, and environment.
-
-Start in [singularities](singularities/README.md). [Regions](regions/README.md) are optional search hints.
-Keep important derived choices in [decisions](decisions/README.md); unresolved contradictions in [conflicts](conflicts/README.md).
-
-Only confirmed records are authoritative. Unmodeled code remains evidence.
-There is no requirement to read all files, create all record types, or model the whole project.
-This short entry does not replace the pinned SPEC.
+Use the configured CLI for context, validation, impact and transactional updates. Empty model does not mean the project has no constraints. Only explicitly confirmed human intent is authoritative.

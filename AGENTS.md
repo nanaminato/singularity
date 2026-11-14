@@ -1,17 +1,15 @@
-# Singularity Protocol
+# Agent instructions — Singularity 0.4
 
-This repository develops Singularity Protocol 0.3 as a Markdown-first draft with TOML tooling.
+Read `.singularity/README.md`, SPEC.md as needed, and relevant model nodes.
+The user authorized a direct architecture upgrade and discarding old model data on 2026-11-14.
 
-Read `.singularity/README.md`, then relevant meta singularities and records.
-
-- Only explicitly human-confirmed singularities are authoritative project intent.
-- Never silently change, remove, weaken, or reinterpret confirmed intent.
-- Draft meta singularities may guide proposed documents; do not claim they are confirmed.
-- Determine relevant singularities before changing their downstream artifacts.
-- Derive ordinary implementation details; avoid asking humans to choose them.
-- Discover candidates only for the current task, a conflict, or an explicitly requested area.
-- Existing code and documents are evidence, not automatic human intent.
-- Use the minimum necessary context. Never bulk-convert a repository into singularities.
-- Expose contradictions. Continue independent work while the affected part awaits resolution.
-- Trace important decisions upstream and reevaluate affected documents, code, tests, and environment after intent changes.
-- Keep this phase small: Markdown, Git, templates, and two examples.
+- `.singularity/model.json` is the current project model (format 3).
+- Only explicitly human-confirmed intent is authoritative. Do not infer approval from code, documents, tests or silence.
+- Separate authorization, delivery and verification. Never mark planned implementation or experiments complete without evidence.
+- Use the shared CLI/application service for model changes: read revision, prepare batch, dry-run when useful, apply with expected revision.
+- Derive ordinary implementation details; ask only for genuinely missing intent or unresolved contradictions.
+- Use bounded graph context and task-relevant files. Missing links do not prove absence of dependencies.
+- Changes to confirmed nodes require actual human authorization and its basis. Role fields are not authentication.
+- Add model features in response to real project needs and validate them against LittleLoop and regression tests.
+- Format changes require an explicit migration strategy. This one-time reset does not authorize future data loss.
+- Run `python -m unittest discover -s tests -v` for core changes.

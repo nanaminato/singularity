@@ -1,0 +1,672 @@
+{
+  "format": 3,
+  "project": {
+    "id": "PROJECT-LITTLELOOP",
+    "name": "LittleLoop：认知系统构建描述"
+  },
+  "types": {},
+  "nodes": [
+    {
+      "id": "SYS-LITTLELOOP",
+      "type": "system",
+      "title": "LittleLoop",
+      "body": "以 C#/.NET 构建 CPU 优先的慢速持续认知系统；本模型描述如何构建，不承载运行时记忆。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-README"
+      ]
+    },
+    {
+      "id": "GOAL-RESEARCH",
+      "type": "goal",
+      "title": "验证可组合认知架构",
+      "body": "研究规则、关联记忆、工具和持续学习能否形成可测量的有用行为。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-README"
+      ]
+    },
+    {
+      "id": "INTENT-TRACE",
+      "type": "intent",
+      "title": "认知过程可追踪",
+      "body": "输入、决策、行动和反馈应可追踪与重放。来自现有文档的候选意图，尚未单独获得人工确认。",
+      "actor": "AI",
+      "authorization": "candidate",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-ROADMAP"
+      ]
+    },
+    {
+      "id": "CONSTRAINT-CPU",
+      "type": "constraint",
+      "title": "CPU 优先与核心无 UI 依赖",
+      "body": "核心优先在 CPU 和本地环境运行，UI、云端和特定模型通过适配器接入。",
+      "actor": "AI",
+      "authorization": "candidate",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-README"
+      ]
+    },
+    {
+      "id": "NON-GOAL-AGI",
+      "type": "non_goal",
+      "title": "不预设意识或通用智能",
+      "body": "研究不预设可以复制人类意识、主观体验或通用智能。",
+      "actor": "AI",
+      "authorization": "candidate",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-README"
+      ]
+    },
+    {
+      "id": "CAP-REPLAY",
+      "type": "capability",
+      "title": "可重放认知循环",
+      "body": "给定相同事件、初始状态和配置，可以重放状态变化与动作选择。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-ROADMAP"
+      ]
+    },
+    {
+      "id": "REQ-VERSION",
+      "type": "requirement",
+      "title": "后台结果必须检查版本",
+      "body": "耗时工作返回时携带发起时的状态版本；过期结果不得覆盖较新状态。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-ARCH"
+      ]
+    },
+    {
+      "id": "MOD-HOST",
+      "type": "module",
+      "title": "事件调度与宿主",
+      "body": "负责生命周期、事件序列、配置和资源预算。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-ARCH"
+      ]
+    },
+    {
+      "id": "MOD-MEMORY",
+      "type": "module",
+      "title": "记忆模块",
+      "body": "负责情景、语义、程序记忆及关联检索；实现尚未建立。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-MEMORY"
+      ]
+    },
+    {
+      "id": "MOD-ACTION",
+      "type": "module",
+      "title": "行动模块",
+      "body": "处理动作候选、权限检查、执行与审计。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-ARCH"
+      ]
+    },
+    {
+      "id": "MOD-DIAGNOSTICS",
+      "type": "module",
+      "title": "诊断与重放",
+      "body": "记录事件轨迹、状态快照和重放差异。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-ARCH",
+        "REF-ROADMAP"
+      ]
+    },
+    {
+      "id": "IFACE-EVENT",
+      "type": "interface",
+      "title": "认知事件入口契约",
+      "body": "拟议接口：输入事件，输出状态版本与动作候选；失败显式返回，不产生部分状态提交。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {
+        "inputs": [
+          "CognitiveEvent",
+          "ExpectedVersion"
+        ],
+        "outputs": [
+          "StateVersion",
+          "ActionProposal[]",
+          "Failure"
+        ]
+      },
+      "references": [
+        "REF-ARCH"
+      ]
+    },
+    {
+      "id": "DATA-EVENT",
+      "type": "data_contract",
+      "title": "CognitiveEvent 数据契约",
+      "body": "提案字段，具体类型与序列化版本在实现前细化。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {
+        "fields": {
+          "id": "稳定事件 ID",
+          "sequence": "宿主单调序列",
+          "kind": "事件类型",
+          "payload": "类型化载荷",
+          "source": "来源",
+          "version": "契约版本"
+        }
+      },
+      "references": [
+        "REF-ARCH"
+      ]
+    },
+    {
+      "id": "FLOW-LOOP",
+      "type": "workflow",
+      "title": "认知循环",
+      "body": "流程可暂停、失败与重试；动作执行必须经过权限检查。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {
+        "steps": [
+          "输入",
+          "感知",
+          "注意力",
+          "工作记忆",
+          "检索",
+          "推理",
+          "动作候选",
+          "权限检查",
+          "执行",
+          "反馈"
+        ]
+      },
+      "references": [
+        "REF-ARCH"
+      ]
+    },
+    {
+      "id": "STATE-HOST",
+      "type": "state_machine",
+      "title": "宿主生命周期",
+      "body": "拟议生命周期；错误恢复策略需在实现时细化。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {
+        "states": [
+          "created",
+          "running",
+          "paused",
+          "stopped",
+          "failed"
+        ],
+        "transitions": [
+          {
+            "from": "created",
+            "to": "running"
+          },
+          {
+            "from": "running",
+            "to": "paused"
+          },
+          {
+            "from": "paused",
+            "to": "running"
+          },
+          {
+            "from": "running",
+            "to": "stopped"
+          },
+          {
+            "from": "running",
+            "to": "failed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "DEC-SERIAL",
+      "type": "decision",
+      "title": "串行事件循环持有可变状态",
+      "body": "采用单主体串行事件循环，后台任务以不可变结果返回；这是可重评的设计方案。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {
+        "rationale": "减少共享可变状态和竞态，为确定性重放提供基础。"
+      },
+      "references": [
+        "REF-ARCH"
+      ]
+    },
+    {
+      "id": "ALT-LOCKS",
+      "type": "alternative",
+      "title": "共享状态加锁方案",
+      "body": "备选：多个模块并发写共享状态，通过锁保护；需额外控制调度顺序和死锁。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "ASSUME-DETERMINISM",
+      "type": "assumption",
+      "title": "受控输入足以确定性重放",
+      "body": "假设记录随机种子、工具输出、时钟输入和配置即可重现决策；需要实验验证。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "QUESTION-EVENT",
+      "type": "question",
+      "title": "事件契约边界",
+      "body": "外部工具响应是否作为独立输入事件，还是动作结果的一部分？在接口实现前确定。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "TASK-CONTRACT",
+      "type": "task",
+      "title": "实现事件契约",
+      "body": "定义事件、版本检查及失败结果，补充契约测试；当前未实施。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "TASK-REPLAY",
+      "type": "task",
+      "title": "实现重放实验宿主",
+      "body": "构建 CLI 重放路径，记录每一步状态与动作；当前未实施。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "ARTIFACT-CORE",
+      "type": "artifact",
+      "title": "规划中的核心类库",
+      "body": "预期产物 LittleLoop.Core；这里是规划节点，不声称已有源码。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "ACCEPT-REPLAY",
+      "type": "acceptance",
+      "title": "逐步重放一致",
+      "body": "相同受控输入下，每一步规范化状态和动作输出一致；不确定输入必须被记录或明确排除。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {
+        "criterion": "两次运行的逐步规范化状态与动作序列完全一致，差异能定位到首个事件。"
+      }
+    },
+    {
+      "id": "TEST-STALE",
+      "type": "test",
+      "title": "过期后台结果拒绝",
+      "body": "提交版本 N 的任务，推进至 N+1 后返回旧结果，断言不覆盖当前状态。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "EXP-REPLAY",
+      "type": "experiment",
+      "title": "重放确定性实验",
+      "body": "实验方案尚未执行，不将计划指标标成测试通过。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {
+        "baseline": "同一事件集正常运行产生的轨迹；与重放轨迹逐步比较。",
+        "metrics": [
+          "状态一致率",
+          "动作一致率",
+          "首个分歧事件",
+          "耗时",
+          "内存峰值"
+        ]
+      }
+    },
+    {
+      "id": "EVIDENCE-DOC",
+      "type": "evidence",
+      "title": "现有架构文档提出串行状态管理",
+      "body": "观察到架构文档明确描述串行事件循环和后台版本检查；仅证明文档内容存在，不证明实现可用。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "planned",
+      "verification": "unverified",
+      "attributes": {
+        "observation": "docs/01-architecture.md 的“并发与线程安全”章节提出串行状态管理与乐观版本检查。"
+      },
+      "references": [
+        "REF-ARCH"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "REL-001",
+      "type": "contains",
+      "source": "SYS-LITTLELOOP",
+      "target": "MOD-HOST"
+    },
+    {
+      "id": "REL-002",
+      "type": "contains",
+      "source": "SYS-LITTLELOOP",
+      "target": "MOD-MEMORY"
+    },
+    {
+      "id": "REL-003",
+      "type": "contains",
+      "source": "SYS-LITTLELOOP",
+      "target": "MOD-ACTION"
+    },
+    {
+      "id": "REL-004",
+      "type": "contains",
+      "source": "SYS-LITTLELOOP",
+      "target": "MOD-DIAGNOSTICS"
+    },
+    {
+      "id": "REL-005",
+      "type": "contains",
+      "source": "SYS-LITTLELOOP",
+      "target": "FLOW-LOOP"
+    },
+    {
+      "id": "REL-006",
+      "type": "contains",
+      "source": "MOD-HOST",
+      "target": "IFACE-EVENT"
+    },
+    {
+      "id": "REL-007",
+      "type": "contains",
+      "source": "MOD-HOST",
+      "target": "STATE-HOST"
+    },
+    {
+      "id": "REL-008",
+      "type": "contains",
+      "source": "IFACE-EVENT",
+      "target": "DATA-EVENT"
+    },
+    {
+      "id": "REL-009",
+      "type": "decomposes",
+      "source": "GOAL-RESEARCH",
+      "target": "CAP-REPLAY"
+    },
+    {
+      "id": "REL-010",
+      "type": "decomposes",
+      "source": "CAP-REPLAY",
+      "target": "REQ-VERSION"
+    },
+    {
+      "id": "REL-011",
+      "type": "plans",
+      "source": "SYS-LITTLELOOP",
+      "target": "TASK-CONTRACT"
+    },
+    {
+      "id": "REL-012",
+      "type": "plans",
+      "source": "SYS-LITTLELOOP",
+      "target": "TASK-REPLAY"
+    },
+    {
+      "id": "REL-013",
+      "type": "derived_from",
+      "source": "DEC-SERIAL",
+      "target": "INTENT-TRACE"
+    },
+    {
+      "id": "REL-014",
+      "type": "derived_from",
+      "source": "DEC-SERIAL",
+      "target": "CONSTRAINT-CPU"
+    },
+    {
+      "id": "REL-015",
+      "type": "derived_from",
+      "source": "DEC-SERIAL",
+      "target": "ASSUME-DETERMINISM"
+    },
+    {
+      "id": "REL-016",
+      "type": "derived_from",
+      "source": "IFACE-EVENT",
+      "target": "DEC-SERIAL"
+    },
+    {
+      "id": "REL-017",
+      "type": "depends_on",
+      "source": "IFACE-EVENT",
+      "target": "DATA-EVENT"
+    },
+    {
+      "id": "REL-018",
+      "type": "depends_on",
+      "source": "TASK-REPLAY",
+      "target": "TASK-CONTRACT"
+    },
+    {
+      "id": "REL-019",
+      "type": "depends_on",
+      "source": "MOD-MEMORY",
+      "target": "IFACE-EVENT"
+    },
+    {
+      "id": "REL-020",
+      "type": "depends_on",
+      "source": "MOD-DIAGNOSTICS",
+      "target": "IFACE-EVENT"
+    },
+    {
+      "id": "REL-021",
+      "type": "implements",
+      "source": "TASK-CONTRACT",
+      "target": "IFACE-EVENT"
+    },
+    {
+      "id": "REL-022",
+      "type": "implements",
+      "source": "TASK-REPLAY",
+      "target": "CAP-REPLAY"
+    },
+    {
+      "id": "REL-023",
+      "type": "implements",
+      "source": "MOD-HOST",
+      "target": "DEC-SERIAL"
+    },
+    {
+      "id": "REL-024",
+      "type": "implements",
+      "source": "ARTIFACT-CORE",
+      "target": "IFACE-EVENT"
+    },
+    {
+      "id": "REL-025",
+      "type": "verifies",
+      "source": "ACCEPT-REPLAY",
+      "target": "CAP-REPLAY"
+    },
+    {
+      "id": "REL-026",
+      "type": "verifies",
+      "source": "EXP-REPLAY",
+      "target": "CAP-REPLAY"
+    },
+    {
+      "id": "REL-027",
+      "type": "verifies",
+      "source": "TEST-STALE",
+      "target": "REQ-VERSION"
+    },
+    {
+      "id": "REL-028",
+      "type": "verifies",
+      "source": "TEST-STALE",
+      "target": "IFACE-EVENT"
+    },
+    {
+      "id": "REL-029",
+      "type": "constrains",
+      "source": "REQ-VERSION",
+      "target": "IFACE-EVENT"
+    },
+    {
+      "id": "REL-030",
+      "type": "supports",
+      "source": "EVIDENCE-DOC",
+      "target": "DEC-SERIAL"
+    },
+    {
+      "id": "REL-031",
+      "type": "references",
+      "source": "DEC-SERIAL",
+      "target": "ALT-LOCKS"
+    },
+    {
+      "id": "REL-032",
+      "type": "references",
+      "source": "QUESTION-EVENT",
+      "target": "IFACE-EVENT"
+    }
+  ],
+  "references": [
+    {
+      "id": "REF-README",
+      "kind": "project_file",
+      "target": "README.md",
+      "purpose": "研究目标与核心原则",
+      "tracking": "live"
+    },
+    {
+      "id": "REF-ARCH",
+      "kind": "project_file",
+      "target": "docs/01-architecture.md",
+      "purpose": "模块职责与状态管理提案",
+      "tracking": "live"
+    },
+    {
+      "id": "REF-MEMORY",
+      "kind": "project_file",
+      "target": "docs/02-memory.md",
+      "purpose": "记忆模型与实验方向",
+      "tracking": "live"
+    },
+    {
+      "id": "REF-ROADMAP",
+      "kind": "project_file",
+      "target": "docs/05-development-roadmap.md",
+      "purpose": "首期闭环、重放与验收方向",
+      "tracking": "live"
+    }
+  ],
+  "views": [
+    {
+      "id": "VIEW-SYSTEM",
+      "title": "系统组成",
+      "kind": "composition",
+      "roots": [
+        "SYS-LITTLELOOP"
+      ]
+    },
+    {
+      "id": "VIEW-GOALS",
+      "title": "研究目标",
+      "kind": "objectives",
+      "roots": [
+        "GOAL-RESEARCH"
+      ]
+    },
+    {
+      "id": "VIEW-DELIVERY",
+      "title": "实施计划",
+      "kind": "delivery",
+      "roots": [
+        "SYS-LITTLELOOP"
+      ]
+    }
+  ]
+}

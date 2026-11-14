@@ -1,5 +1,0 @@
-format = 2
-actor = "Human"
-id = "S-TODO-004"
-status = "Confirmed"
-statement = "Observer may view todos but may not create, modify, or delete them."

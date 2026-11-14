@@ -1,5 +1,0 @@
-format = 2
-id = "MS-010"
-status = "Candidate"
-actor = "AI"
-statement = "Changes to a singularity require reevaluation of its affected decisions and implementation."

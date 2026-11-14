@@ -62,7 +62,7 @@ def main():
 
     def run():
         try:
-            serve_editor(Path(project) / ".singularity" / "singularities", 0,
+            serve_editor(Path(project), 0,
                          open_browser=True, on_ready=outcome.append)
         except (OSError, ValueError) as error:
             outcome.append(error)

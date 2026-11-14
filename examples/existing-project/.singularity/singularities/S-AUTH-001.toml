@@ -1,7 +1,0 @@
-format = 2
-actor = "Human"
-id = "S-AUTH-001"
-status = "Confirmed"
-statement = "Linux authentication uses the operating system PAM stack."
-paths = ["src/Auth/", "tests/Auth/"]
-decisions = ["D-AUTH-001"]

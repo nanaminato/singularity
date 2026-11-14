@@ -1,67 +1,24 @@
-# Singularity Protocol · 奇点协议
+# Singularity Protocol 0.4
 
-让人维护少量不可安全推导的意图，让现有 Coding Agent 推导和维护实现。
+奇点是关键人类意图；项目模型描述从意图到系统设计、实现和验证的完整链路。当前实现为 Python 标准库核心、JSON 事务 CLI 和本地编辑工作台。
 
-**0.3.0 · Draft**。协议以 Markdown 编写，CLI 和本地网页共用 TOML 奇点记录。协议的长期效果仍待验证。
+本轮是破坏性架构升级：format 3，不兼容 format 1/2 TOML，不迁移旧记录和历史。Git 仓库历史不重写。详见 [迁移方案](docs/migration.md)。
 
-## 核心思想
+## 入口
 
-- **奇点**：Agent 无法安全推导、需要人长期控制的意图。
-- **推导决策**：为满足奇点选择的实现，可以随证据改变。
-- **现有代码**：证据，不能自动升级为人的意图。
-- **局部接入**：只围绕当前任务理解必要代码，未建模区域是正常状态。
+- [模型规范](SPEC.md)：节点、关系、引用、树视图、状态与权限。
+- [核心架构](docs/architecture.md)：模型、存储、服务、查询与入口分层。
+- [CLI 使用](tools/README.md)：初始化、事务预览、更新、上下文与影响分析。
+- [LittleLoop 验证](docs/littleloop-validation.md)：真实项目描述链与验证边界。
+- [后续演进](docs/roadmap.md)：编辑器、语义校验、引用监测与 Agent 集成。
 
-目标是覆盖必要的人类意图，而不是把全部代码转换为文档。
-
-## 从哪里开始
-
-| 目的 | 入口 |
-| --- | --- |
-| 在现有项目使用 | [导入指南](docs/adoption.md) |
-| 了解协议数据语义 | [SPEC.md](SPEC.md) |
-| 查看十条元奇点 | [Meta Singularities](.singularity/singularities/) |
-| 了解确认与变更 | [生命周期](protocol/lifecycle.md) |
-| 了解追溯和影响范围 | [关系](protocol/relations.md) |
-| 新项目示例 | [Minimal](examples/minimal/README.md) |
-| 大型存量项目示例 | [Existing Project](examples/existing-project/README.md) |
-| 用实际开发验证理论 | [实验指南](docs/experiments.md) |
-| 未来扩展 | [路线图](docs/roadmap.md) |
-
-## 五分钟导入
-
-1. 将 [templates/project/.singularity](templates/project/.singularity/README.md) 目录复制到目标项目根目录。
-2. 把 [Agent 指令片段](templates/AGENTS.fragment.md) **追加**到现有 `AGENTS.md`，保留原有规则；没有该文件时才创建。
-3. 编辑 `.singularity/config.md`，记录协议版本、协议来源、目标项目的接入范围。
-4. 给 Agent 一个具体任务，例如“将登录模块纳入奇点管理；先从登录入口查看必要证据，列出不能安全推导的候选意图”。
-5. 审阅少量 Candidate，明确确认需要长期保留的意图。实现方式由 Agent 推导。
-
-无需提前扫描全仓库。Region 可选，一个文档可以容纳多个稳定 ID。
-
-## 本仓库如何使用自己的协议
-
-[AGENTS.md](AGENTS.md) 约束本仓库的工作方式，[.singularity](.singularity/README.md) 记录本仓库的接入与推导决策。
-
-对话提出的十条元奇点目前登记为 **Candidate**。建立仓库的请求并不等同于逐条确认公理。SPEC、模板和工作流程均是基于候选公理形成的可审阅草案；后续可以由人明确确认或修订公理，再重评下游文档。示例中的 Confirmed 是虚构场景设定，不代表实际项目的人工批准。
-
-## 仓库结构
-
-```text
-AGENTS.md                    简短的 Agent 工作规则
-SPEC.md                      六个概念和数据语义
-protocol/                    元奇点、生命周期、关系
-templates/                   记录模板和可复制的项目导入包
-examples/minimal/            少量奇点管理一个 Todo 项目
-examples/existing-project/   从存量项目的 Auth 区域开始
-docs/                        导入、实验、来源与路线图
-.singularity/                协议仓库自身的记录
+```powershell
+python tools/singularity.py --project . validate
+python tools/singularity.py --project ../littleloop context IFACE-EVENT --depth 2
+python tools/singularity.py --project ../littleloop impact IFACE-EVENT --depth 3
+python -m unittest discover -s tests -v
 ```
 
-## 版本与升级
+每个项目使用 `.singularity/model.json` 保存类型定义、节点、关系、引用和视图。模型描述如何构建项目，不承担被描述系统的运行时数据存储。
 
-项目固定所用版本及对应的 Git 标签或提交。当前草案为 `0.3.0`，旧协议可从 Git 历史查阅。升级时由人明确选择版本，Agent 比较协议变化并重评受影响记录。完整规范留在协议仓库，目标项目维护短入口和自己的意图记录。
-
-来源是用户提供的 [讨论对话](https://chatgpt.com/share/6abcc255-60d0-83e9-8752-e24bc93d1f52)，取其中最后一轮“Protocol 先行、可增量导入”的方案；[来源与取舍](docs/origin.md) 说明具体边界。
-
-## 本地奇点工具
-
-Windows 用户可双击 [open-editor.pyw](open-editor.pyw)，在图形窗口选择自己的项目目录。启动器使用本机 Python 3.11+，自动打开 Angular 编辑器。Agent 可通过 CLI 操作同一批 TOML 记录。分发与构建步骤见 [工具文档](tools/README.md)。
+双击 `open-editor.pyw` 选择项目，打开本地工作台。支持三种树视图、类型字段、关系与文件引用编辑，以及上下文筛选。CLI 与网页共用事务及校验规则。

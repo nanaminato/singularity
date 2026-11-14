@@ -1,0 +1,260 @@
+{
+  "format": 3,
+  "project": {
+    "id": "PROJECT-SINGULARITY",
+    "name": "Singularity 项目描述协议"
+  },
+  "types": {},
+  "nodes": [
+    {
+      "id": "INTENT-EVOLUTION",
+      "type": "intent",
+      "title": "描述并指导系统构建",
+      "body": "建立可演进项目模型，以 LittleLoop 的真实开发需要持续改进奇点架构；本轮直接升级模型规范、迁移方案和核心实现，无需兼容旧数据。",
+      "actor": "Human",
+      "authorization": "confirmed",
+      "authorization_basis": "2026-11-14 当前会话：用户明确批准项目模型方向，并要求直接架构升级、不保留旧数据及历史。",
+      "delivery": "in_progress",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "SYS-SINGULARITY",
+      "type": "system",
+      "title": "项目构建描述系统",
+      "body": "把意图、结构、契约、设计、任务和验证连接起来；不承载目标系统运行时数据。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-SPEC"
+      ]
+    },
+    {
+      "id": "MOD-MODEL",
+      "type": "module",
+      "title": "模型与校验",
+      "body": "统一节点、关系、引用、树视图、独立状态和扩展类型。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-CORE"
+      ]
+    },
+    {
+      "id": "MOD-STORAGE",
+      "type": "module",
+      "title": "快照存储",
+      "body": "JSON 文件作为事务边界，使用 revision、协作锁和原子替换。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "MOD-SERVICE",
+      "type": "module",
+      "title": "应用服务",
+      "body": "共享 put/delete 批量操作与人类授权依据检查。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "MOD-QUERY",
+      "type": "module",
+      "title": "查询与影响",
+      "body": "提供有限图上下文、解释性影响线索、树和引用检查。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "MOD-CLI",
+      "type": "module",
+      "title": "CLI 与只读预览",
+      "body": "JSON 命令行事务与本机只读预览；完整图形编辑器待后续实现。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {}
+    },
+    {
+      "id": "DEC-SNAPSHOT",
+      "type": "decision",
+      "title": "使用版本化 JSON 快照",
+      "body": "本轮以单文件保证跨节点与边的原子更新，不引入数据库。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {
+        "rationale": "先确立模型语义、事务和查询边界；模型规模增长后再按测量结果优化存储。"
+      },
+      "references": [
+        "REF-MIGRATION"
+      ]
+    },
+    {
+      "id": "TEST-CORE",
+      "type": "test",
+      "title": "核心与 LittleLoop 回归",
+      "body": "涵盖图约束、引用、独立状态、授权、原子失败、并发写入与 LittleLoop 链路。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {},
+      "references": [
+        "REF-TESTS"
+      ]
+    },
+    {
+      "id": "EVIDENCE-CORE",
+      "type": "evidence",
+      "title": "20 项回归通过",
+      "body": "2026-11-14 在 Windows Python 3.14 下运行 unittest，20 项通过；本机 HTTP 测试在沙箱外运行。仅验证模型工具，不验证认知系统能力。",
+      "actor": "AI",
+      "authorization": "not_applicable",
+      "delivery": "implemented",
+      "verification": "unverified",
+      "attributes": {
+        "observation": "python -m unittest discover -s tests -v：Ran 20 tests, OK。"
+      },
+      "references": [
+        "REF-TESTS"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "REL-001",
+      "type": "contains",
+      "source": "SYS-SINGULARITY",
+      "target": "MOD-MODEL"
+    },
+    {
+      "id": "REL-002",
+      "type": "contains",
+      "source": "SYS-SINGULARITY",
+      "target": "MOD-STORAGE"
+    },
+    {
+      "id": "REL-003",
+      "type": "contains",
+      "source": "SYS-SINGULARITY",
+      "target": "MOD-SERVICE"
+    },
+    {
+      "id": "REL-004",
+      "type": "contains",
+      "source": "SYS-SINGULARITY",
+      "target": "MOD-QUERY"
+    },
+    {
+      "id": "REL-005",
+      "type": "contains",
+      "source": "SYS-SINGULARITY",
+      "target": "MOD-CLI"
+    },
+    {
+      "id": "REL-006",
+      "type": "derived_from",
+      "source": "DEC-SNAPSHOT",
+      "target": "INTENT-EVOLUTION"
+    },
+    {
+      "id": "REL-007",
+      "type": "implements",
+      "source": "MOD-STORAGE",
+      "target": "DEC-SNAPSHOT"
+    },
+    {
+      "id": "REL-008",
+      "type": "depends_on",
+      "source": "MOD-SERVICE",
+      "target": "MOD-MODEL"
+    },
+    {
+      "id": "REL-009",
+      "type": "depends_on",
+      "source": "MOD-QUERY",
+      "target": "MOD-MODEL"
+    },
+    {
+      "id": "REL-010",
+      "type": "depends_on",
+      "source": "MOD-CLI",
+      "target": "MOD-SERVICE"
+    },
+    {
+      "id": "REL-011",
+      "type": "depends_on",
+      "source": "MOD-CLI",
+      "target": "MOD-STORAGE"
+    },
+    {
+      "id": "REL-012",
+      "type": "verifies",
+      "source": "TEST-CORE",
+      "target": "SYS-SINGULARITY"
+    },
+    {
+      "id": "REL-013",
+      "type": "supports",
+      "source": "EVIDENCE-CORE",
+      "target": "TEST-CORE"
+    }
+  ],
+  "references": [
+    {
+      "id": "REF-SPEC",
+      "kind": "project_file",
+      "target": "SPEC.md",
+      "purpose": "模型规范",
+      "tracking": "live"
+    },
+    {
+      "id": "REF-CORE",
+      "kind": "project_file",
+      "target": "tools/singularity_core/model.py",
+      "purpose": "核心校验实现",
+      "tracking": "live"
+    },
+    {
+      "id": "REF-TESTS",
+      "kind": "project_file",
+      "target": "tests/test_core.py",
+      "purpose": "核心与 LittleLoop 回归测试",
+      "tracking": "live"
+    },
+    {
+      "id": "REF-MIGRATION",
+      "kind": "project_file",
+      "target": "docs/migration.md",
+      "purpose": "本次直接升级方案",
+      "tracking": "live"
+    }
+  ],
+  "views": [
+    {
+      "id": "VIEW-CORE",
+      "title": "核心架构",
+      "kind": "composition",
+      "roots": [
+        "SYS-SINGULARITY"
+      ]
+    }
+  ]
+}

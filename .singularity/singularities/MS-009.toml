@@ -1,5 +1,0 @@
-format = 2
-id = "MS-009"
-status = "Candidate"
-actor = "AI"
-statement = "Unmodeled regions of a project are valid and expected."

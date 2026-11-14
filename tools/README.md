@@ -1,103 +1,77 @@
-# Singularity CLI 与本地编辑器
+# Singularity 0.4 core CLI
 
-本工具用于 0.3 草案，使用 Python 3.11+ 标准库。CLI 和本地编辑器直接读写同一批 TOML 记录。
-
-## 本地编辑器
-
-Windows x64 压缩包内含 Python 和 Tk。完整解压后，双击 `Singularity Editor.exe`，点击「Browse…」选择项目根目录。命令行可直接运行 `singularity.exe --help`。请保留同目录下的 `_internal`，查询 Git 历史需要系统能找到 Git。
-
-维护者可在编译 Angular 后，在 Windows x64 上用带 Tk 的 Python 和 PyInstaller 构建压缩包内容。运行 `python -m PyInstaller --distpath .windows-build/dist --workpath .windows-build/work tools/windows.spec`，再将输出的 `Singularity-Windows` 目录完整打包。
-
-Windows 用户可双击 [open-editor.pyw](../open-editor.pyw)，用图形窗口选择项目根目录，浏览器会自动打开。关闭启动器窗口即可停止服务。需要安装带 Tk 和 `.pyw` 文件关联的 Python 3.11+。编辑器读写项目的 `.singularity/singularities`，首次新建候选时会创建目录。Git 历史读取项目已提交的记录。
-
-分发时把 `open-editor.pyw` 和 `tools/` 一起复制并保留目录结构。Angular 编译结果已在 `tools/editor/`，用户端直接使用。维护网页时用 Node.js 26 在仓库根目录运行 `npm --prefix web ci`，再运行 `npm --prefix web run build` 更新编译结果。
+Python 3.11+，只使用标准库。所有结果与错误均为 JSON。成功退出码 0，模型/文件错误 1，命令参数错误 2。
 
 ```powershell
-python tools/singularity.py --records examples/minimal/.singularity/singularities serve
+python tools/singularity.py --project C:/path/to/project init --name "My project"
+python tools/singularity.py --project C:/path/to/project schema
+python tools/singularity.py --project C:/path/to/project list
+python tools/singularity.py --project C:/path/to/project validate
 ```
 
-在浏览器打开命令输出的地址，默认是 [127.0.0.1:8765](http://127.0.0.1:8765/)。可搜索 ID 和陈述、查看关联、保存陈述和确认候选。网页操作标记为 Human。如果 Agent 已修改当前打开的记录，网页会要求重新加载。服务仅监听本机，按 Ctrl+C 停止，可用 `serve --port 8766` 改端口。
+init 创建空模型，不覆盖已有模型。schema 输出内置类型必需属性和关系影响方向；完整字段规范见 [SPEC](../SPEC.md)。
 
-Agent 可用 `list`、`get` 和 `context` 取得 JSON，用 `create`、`links`、`update` 和 `confirm` 修改记录，再用 `validate` 和 `impact` 校验与查看影响。
+## 事务写入
 
-## 新建和编辑关联
+将操作数组保存为 UTF-8 JSON 文件。例如 `operations.json`：
 
-打开编辑器时默认显示星图总览。连线来自已保存的路径和决策关联，共用的目标只显示一次；无关联的奇点单独显示。拖动星图空白处可平移，滚轮和缩放按钮可调整比例。点击奇点查看陈述与依据，点击决策或路径查看关联的奇点。点击「总览」可返回。
+```json
+[
+  {"action":"put","collection":"nodes","value":{
+    "id":"MOD-HOST","type":"module","title":"事件宿主",
+    "body":"持有事件循环与状态，具体实现仍待验证。","actor":"AI",
+    "authorization":"not_applicable","delivery":"planned",
+    "verification":"unverified","attributes":{}
+  }}
+]
+```
 
-可在记录目录旁添加 `node-names.toml`，以稳定 ID 为键保存单行显示名称，例如 `D-PHASE-001 = "首期交付范围"`。奇点和决策都支持名称。星图优先显示名称，未命名的节点显示 ID；关联与 Git 历史仍使用稳定 ID。修改文件后，在编辑器中点击「重新加载」。
-
-网页点击「新建候选」，填写稳定 ID 和陈述。路径和决策 ID 各占一行。创建后选中该记录，使用「保存关联」更新两组关联。
+从 list、get 或 validate 结果取得 revision：
 
 ```powershell
-python tools/singularity.py create S-EXAMPLE-001 --statement "A fictional requirement." --paths src/
-python tools/singularity.py links S-EXAMPLE-001 --paths src/ tests/ --decisions D-EXAMPLE-001
+python tools/singularity.py --project C:/path/to/project apply operations.json --expected REVISION --dry-run
+python tools/singularity.py --project C:/path/to/project apply operations.json --expected REVISION
 ```
 
-`create` 写入 `<ID>.toml`，新记录状态为 `Candidate`，重复 ID 会报错。`links` 仅替换显式传入的列表，单独传入 `--paths` 或 `--decisions` 可清空对应列表。决策 ID 按格式校验，实际引用关系仍需核对。
+put 是完整对象替换，不是字段合并。collection 支持 nodes/relations/references/views/types。types 操作用 `id` 指定类型名、`value` 指定 schema。delete 用 `id` 指定对象，不支持隐式级联删除。多项操作在一个事务内一起通过校验再保存。
 
-在仓库根目录运行以下命令。两个示例各提供一条 TOML 记录。省略 `--records` 时，使用当前工作目录下的 `.singularity/singularities`。
+确认节点或修改已确认节点，使用 `--actor Human --basis "本次人的明确决定"`；只有实际授权存在时才能填写。调用者提供的 actor 不是真实身份认证。拒绝、退役同样要求明确依据。未经授权不能把现有文档自动升级为已确认意图。
+
+## 查询
 
 ```powershell
-python tools/singularity.py --records examples/minimal/.singularity/singularities validate
-python tools/singularity.py --records examples/minimal/.singularity/singularities get S-TODO-001
-python tools/singularity.py --records examples/minimal/.singularity/singularities context --path README.md
-python tools/singularity.py --records examples/existing-project/.singularity/singularities validate
-python tools/singularity.py --records examples/existing-project/.singularity/singularities get S-AUTH-001
-python tools/singularity.py --records examples/existing-project/.singularity/singularities context --path src/Auth/AuthService.cs
+python tools/singularity.py --project ../littleloop get IFACE-EVENT
+python tools/singularity.py --project ../littleloop context IFACE-EVENT --depth 2
+python tools/singularity.py --project ../littleloop impact IFACE-EVENT --depth 3
+python tools/singularity.py --project ../littleloop tree VIEW-SYSTEM
+python tools/singularity.py --project ../littleloop gaps
+python tools/singularity.py --project ../littleloop check-refs
 ```
 
-创建自己的记录时，在记录目录直接放置 UTF-8 的 `.toml` 文件，每个文件保存一条记录。以下是一条候选记录。
+context 双向取邻域；impact 按依赖方向取重评线索，含原因边。depth 范围 0–100，默认 2。tree 返回展平行，每行带 ID、父级和深度。gaps 输出缺少验证关联、未决假设/问题/冲突及 stale 状态，不代表项目完整性证明。
 
-```toml
-format = 2
-actor = "AI"
-id = "S-TODO-001"
-status = "Candidate"
-statement = "删除待办事项前需要用户确认。"
-reason = "避免误删。"
-```
+check-refs 返回 exists/missing/matched/changed/outside_project/unreadable/unchecked。默认不检查外部文件，`--external` 才启用。URL 不联网检查。存在性不意味着 revision 或 locator 已验证；结果明确显示检查边界。
 
-`format = 2` 使用 `actor = "Human"` 或 `actor = "AI"`。工具可读取格式 1 的旧记录，编辑时转为格式 2。
-
-- `id` 使用大写字母、数字和连字符，首段以字母开头，至少有两段。所有文件中的 ID 必须唯一，文件名可独立修改。
-- `status` 接受 `Candidate`、`Confirmed`、`Rejected`、`Retired`。`statement` 和可选的 `reason` 使用非空字符串，支持 TOML 多行字符串。
-- `paths` 是可选的项目相对路径数组。文件路径按全名匹配，尾部带 `/` 的目录匹配其下各级文件。TOML 里使用 `/`，查询可使用 Windows 反斜杠，匹配区分大小写。
-
-所有命令都检查记录目录的直接子文件。语法错误、未知字段、重复 ID、无效字段或没有 TOML 记录都会导致失败。`get` 先通过整库校验，再向标准输出写入单条 JSON。`context` 同样先校验，再按 ID 顺序输出匹配记录的 JSON 数组，无匹配时输出 `[]`。错误写入标准错误，退出码为 `1`；参数错误由 Python 的参数解析器返回 `2`。
-
-`--path` 相对于记录所属项目的根目录。认证示例中的源码路径取自虚构场景，查询只比较路径文本。路径命中表示该记录值得查看，意图的适用范围仍由陈述决定。
-
-## 查看变更影响
-
-在 Git 工作树内运行，`--records` 指向该仓库内的记录目录。
+## 浏览器和打包
 
 ```powershell
-python tools/singularity.py --records examples/minimal/.singularity/singularities impact --base HEAD
-python tools/singularity.py --records examples/existing-project/.singularity/singularities impact --base HEAD
+python tools/singularity.py --project ../littleloop serve --open
 ```
 
-`impact` 比较基准提交和当前磁盘内容，包含尚未跟踪的 TOML 文件。两侧均按稳定 ID 校验。结果按 ID 输出 JSON 数组，每项包括变更类型（`added`、`modified` 或 `removed`）、变动字段，以及两侧声明的决策 ID 和路径的并集。只改文件名、注释或字段顺序时，记录内容仍相等。没有变更时返回 `[]`。
+本机工作台支持节点、关系、文件引用和树视图的创建、修改和删除。选择组成、目标或交付视图浏览节点，通过对应关系和根节点维护树。节点类型决定属性表单，数组与对象在各自的 JSON 字段中编辑。外部引用记录路径或网址、用途和版本信息。
 
-可选的 `decisions = ["D-AUTH-001"]` 声明直接关联的决策 ID。认证示例引用现有决策 `D-AUTH-001`。待办示例的 `S-TODO-001` 在现有决策中没有显式引用，结果中的决策列表为空。决策和路径是已记录的重评线索，仍需结合实际依赖核查。
+上下文查询可按深度、关系类型及结果节点类型筛选。网页保存使用当前 revision 并通过核心事务服务校验。已确认节点等受保护操作仍需填写人工决定依据。遇到版本冲突时可保留草稿内容，重新加载后再应用。
 
-## 修改、确认和移除
+双击仓库根目录 open-editor.pyw 可选择项目。Windows PyInstaller 构建入口为 tools/windows.spec。
+
+## 测试
 
 ```powershell
-python tools/singularity.py update S-EXAMPLE-001 --statement "Revised statement."
-python tools/singularity.py confirm S-EXAMPLE-001 --actor Human
-python tools/singularity.py reject S-EXAMPLE-002 --reason "已合并至 S-EXAMPLE-001"
-python tools/singularity.py retire S-EXAMPLE-001 --actor Human
-python tools/singularity.py retire S-EXAMPLE-003 --actor Human --remove
+python -m unittest discover -s tests -v
 ```
 
-CLI 默认标记 AI。确认、修改已确认陈述和退役时使用 `--actor Human`，由人明确决定后执行。网页按 Human 标记操作。退役默认保留 `Retired` 记录，网页显示「已移除」。直接删除可通过网页按钮或 CLI 的 `--remove` 完成，已提交的版本仍可在 Git 中查看。
+测试包括图约束、引用、独立状态、扩展类型、授权、原子失败、两个写入者竞争、CLI dry-run 和 LittleLoop 描述链。
 
-## 按稳定 ID 查看 Git 历史
+## 树形编辑
 
-网页「Git 历史」可查当前选中的记录，也可输入已移除记录的 ID。CLI 可运行：
-
-```powershell
-python tools/singularity.py --records examples/minimal/.singularity/singularities history S-TODO-001
-```
-
-历史沿当前分支的第一父提交链读取指定记录目录，按 ID 比较每个相关提交中的记录，显示字段旧值、新值及文件路径变化。目录内文件改名仍可追溯。合并纳入的变化归入合并提交。未提交的编辑可用 `impact --base HEAD` 查看。迁移前的 Markdown 示例保存在 `v0.1.0`，TOML 历史从首次提交 TOML 记录开始。
+三种树均支持添加子节点、展开折叠和拖拽。拖到节点中部建立父子关系，拖到上边缘或下边缘调整同级顺序。新增节点和父子关系一次保存，移动及排序也以批量事务保存。后端继续校验无环、单父级和版本冲突。折叠状态保留于当前页面会话。

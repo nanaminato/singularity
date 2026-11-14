@@ -1,57 +1,9 @@
-# 导入到现有项目
+# 接入 Singularity 0.4
 
-首次只添加入口和少量记录，不要求理解或导入整个项目。完整协议固定在版本来源中；项目维护自己的意图。
+在项目根目录使用本协议工具执行 `python /path/to/singularity/tools/singularity.py --project . init --name "Project"`。
 
-## 1. 获取固定版本
+把 templates/AGENTS.fragment.md 的说明追加到已有 Agent 指令，保留原有规则。创建 `.singularity/README.md`，记录固定协议来源和版本。可复制 templates/project/.singularity 作为空项目模板。
 
-```sh
-git clone https://github.com/nanaminato/singularity.git singularity-protocol
-git -C singularity-protocol checkout "已采用的提交哈希"
-```
+围绕真实任务建立目标、模块、契约、设计决策和验证链；已有文档是证据，不能自动成为 confirmed 意图。使用同一批 apply 操作创建节点、关系、引用和视图，再做全图校验。详见 [CLI](../tools/README.md) 与 [模型规范](../SPEC.md)。
 
-目录位置由你选择。不要把协议仓库克隆进目标项目已经使用的 `.singularity` 目录。
-
-## 2. 复制接入目录
-
-将协议仓库的 `templates/project/.singularity` 复制到目标项目根目录。资源管理器即可完成，不需要 CLI。
-
-目标项目已有 `.singularity` 时逐项合并，保留现有记录与配置；不要覆盖目录。已有 `AGENTS.md` 时追加 [片段](../templates/AGENTS.fragment.md)，保留其他规则。如果 Agent 使用其他项目指令文件，将同一片段接入其实际读取的文件，确认入口可被它读取。
-
-如果已有规则发生矛盾，说明具体矛盾并按会话授权解决，不要默默删掉旧规则。
-
-## 3. 配置版本与范围
-
-编辑 [config 模板](../templates/project/.singularity/config.md)，记录所采用的 `0.3.0` 草案提交。用人明确选择的区域替换未选择范围，例如“Linux 登录相关路径，其他模块未建模”。
-
-小项目可省略 Region。大型项目按 [region 模板](../templates/region.md) 登记搜索范围和少量入口；Includes 不是读取整个目录的任务单。
-
-离线使用时记录本地协议 checkout 的路径、版本及 commit，按需读取所需文档。不要依赖机器上恰好存在的最新副本。
-
-## 4. 从一个任务开始
-
-Windows 用户可以双击协议 checkout 中的 [open-editor.pyw](../open-editor.pyw)，选择目标项目根目录，在网页创建或编辑 TOML 记录。提交记录后，可以按稳定 ID 查看 Git 历史。
-
-可以直接给 Agent：
-
-> 从今天开始将登录模块纳入奇点管理。先读取入口和必要测试，给出少量无法安全推导的候选意图；现有代码仅作证据，不进行全仓库导入。可推导的实现选择请自行处理。
-
-候选应该说明“不确定的意图是什么、已有证据是什么、为什么需要人决定”。候选数量不设机械 KPI；不需要人的选择时可以为零。
-
-人确认后，将记录标记为 Confirmed，操作者标记为 Human。用户在当前任务中明确给出的约束可直接采用。仅从代码发现的行为保持 Candidate。
-
-## 5. 继续正常开发
-
-用户说“Observer 可以创建 Todo，但不能修改或删除已有 Todo”时：
-
-- 明确记录意图修订和依据。
-- 找到旧只读意图涉及的服务端授权、UI 操作和测试。
-- 推翻旧的一刀切只读决策，保留 Owner 规则。
-- 验证创建成功、修改和删除拒绝、其他既有意图仍成立。
-
-详见 [minimal 示例](../examples/minimal/README.md)。跨未建模边界的例子见 [existing-project](../examples/existing-project/README.md)。
-
-## 升级与退出
-
-升级协议是显式版本变更：比较新旧规范，检查状态语义、模板和项目指令的影响，再修改 config。项目意图不应因协议升级而被自动改义。
-
-退出时可以移除接入指令并归档 `.singularity` 历史；退出协议本身不授权修改产品行为。不要静默丢弃仍需遵守的人类约束。
+不用一次建模整个仓库。完整表达能力与渐进接入并不矛盾；发现描述缺口时逐步补充。

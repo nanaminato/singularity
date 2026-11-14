@@ -1,5 +1,0 @@
-format = 2
-id = "MS-005"
-status = "Candidate"
-actor = "AI"
-statement = "Existing code is evidence, not automatically intent."

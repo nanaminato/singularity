@@ -1,5 +1,0 @@
-format = 2
-actor = "Human"
-id = "S-TODO-005"
-status = "Confirmed"
-statement = "Saved data must survive server restart."

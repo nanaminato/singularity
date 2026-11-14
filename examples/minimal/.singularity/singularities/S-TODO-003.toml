@@ -1,5 +1,0 @@
-format = 2
-actor = "Human"
-id = "S-TODO-003"
-status = "Confirmed"
-statement = "The Workspace Owner may modify its todos."

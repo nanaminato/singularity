@@ -1,6 +1,0 @@
-format = 2
-actor = "AI"
-id = "S-PRIV-001"
-status = "Candidate"
-statement = "Authenticated administrators may execute privileged operations through the helper."
-reason = "Open question: whether to retain the service-account restriction or permit administrator operations, and which operations. See ../evidence.md. Existing code and the request to investigate provide evidence for review."
