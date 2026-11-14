@@ -17,6 +17,15 @@ interface RecordEntry {
   record: RecordData;
   revision: string;
 }
+interface MapNode {
+  key: string;
+  value: string;
+  label: string;
+  kind: 'intent' | 'paths' | 'decisions';
+  neighbors: MapNode[];
+  x: number;
+  y: number;
+}
 interface HistoryEntry {
   commit: string;
   date: string;
@@ -41,7 +50,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 class Editor {
   private readonly changeDetector = inject(ChangeDetectorRef);
   records: RecordEntry[] = [];
+  nodeNames: Record<string, string> = {};
   selected?: RecordEntry;
+  overview = true;
   filter = '';
   creating = false;
   confirmingRemoval = false;
@@ -70,7 +81,8 @@ class Editor {
   }
   get filtered() {
     const query = this.filter.trim().toLowerCase();
-    return this.records.filter(({record}) => (record.id + ' ' + record.statement).toLowerCase().includes(query));
+    return this.records.filter(({record}) =>
+      [record.id, this.nodeNames[record.id], record.statement].join(' ').toLowerCase().includes(query));
   }
 
   get satellites() {
@@ -79,8 +91,155 @@ class Editor {
     return links.map((link, index) => {
       const angle = -90 + index * 360 / Math.min(links.length, 12);
       const radians = angle * Math.PI / 180;
-      return {...link, angle, x: 50 + 35 * Math.cos(radians), y: 50 + 35 * Math.sin(radians)};
+      const name = link.kind === 'decisions' ? this.nodeNames[link.value] : undefined;
+      return {...link, name, angle, x: 50 + 35 * Math.cos(radians), y: 50 + 35 * Math.sin(radians)};
     });
+  }
+
+  mapZoom = 1;
+  mapX = 0;
+  mapY = 0;
+  mapTarget?: MapNode;
+  private drag?: {id: number; x: number; y: number};
+
+  get overviewGraph() {
+    const nodes = new Map<string, MapNode>();
+    const edges: {source: MapNode; target: MapNode}[] = [];
+    for (const {record} of this.filtered) {
+      const source: MapNode = {
+        key: 'intent:' + record.id, value: record.id, kind: 'intent',
+        label: this.nodeNames[record.id] || record.id, neighbors: [], x: 0, y: 0,
+      };
+      nodes.set(source.key, source);
+      for (const kind of ['paths', 'decisions'] as const) {
+        for (const value of new Set(record[kind])) {
+          const key = kind + ':' + value;
+          let target = nodes.get(key);
+          if (!target) {
+            target = {key, value, kind, label: kind === 'decisions' ? this.nodeNames[value] || value : value,
+              neighbors: [], x: 0, y: 0};
+            nodes.set(key, target);
+          }
+          source.neighbors.push(target);
+          target.neighbors.push(source);
+          edges.push({source, target});
+        }
+      }
+    }
+
+    const visited = new Set<MapNode>();
+    const groups: MapNode[][] = [];
+    const isolated: MapNode[] = [];
+    for (const node of nodes.values()) {
+      if (visited.has(node)) continue;
+      visited.add(node);
+      if (!node.neighbors.length) {
+        isolated.push(node);
+        continue;
+      }
+      const group = [node];
+      for (const member of group) {
+        for (const neighbor of member.neighbors) {
+          if (visited.has(neighbor)) continue;
+          visited.add(neighbor);
+          group.push(neighbor);
+        }
+      }
+      groups.push(group);
+    }
+
+    let right = 24;
+    let bottom = 0;
+    for (const group of groups) {
+      const hub = group.reduce((best, node) => node.neighbors.length > best.neighbors.length ? node : best);
+      const remaining = group.filter(node => node !== hub);
+      const radius = Math.max(94, remaining.length * 32 / Math.PI);
+      hub.x = right + radius + 58;
+      hub.y = radius + 62;
+      remaining.forEach((node, index) => {
+        const angle = index * 2 * Math.PI / remaining.length - Math.PI / 2;
+        node.x = hub.x + radius * Math.cos(angle);
+        node.y = hub.y + radius * Math.sin(angle);
+      });
+      right += radius * 2 + 144;
+      bottom = Math.max(bottom, radius * 2 + 122);
+    }
+
+    isolated.forEach((node, index) => {
+      node.x = 80 + index % 6 * 132;
+      node.y = bottom + 72 + Math.floor(index / 6) * 96;
+    });
+    const width = Math.max(380, right, Math.min(isolated.length, 6) * 132 + 32);
+    const height = Math.max(260, bottom + Math.ceil(isolated.length / 6) * 96 + 32);
+    return {nodes: [...nodes.values()], nodesByKey: nodes, edges, width, height};
+  }
+
+  get mapDragging() { return this.drag !== undefined; }
+
+  resetMap() {
+    this.mapZoom = 1;
+    this.mapX = this.mapY = 0;
+  }
+
+  zoomMap(factor: number, x: number, y: number) {
+    const zoom = Math.min(16, Math.max(0.5, this.mapZoom * factor));
+    const ratio = zoom / this.mapZoom;
+    this.mapX = x - (x - this.mapX) * ratio;
+    this.mapY = y - (y - this.mapY) * ratio;
+    this.mapZoom = zoom;
+  }
+
+  private mapPoint(svg: SVGSVGElement, event: MouseEvent) {
+    const matrix = svg.getScreenCTM();
+    return matrix ? new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse()) : null;
+  }
+
+  wheelMap(event: WheelEvent) {
+    const svg = event.currentTarget;
+    if (!(svg instanceof SVGSVGElement)) return;
+    event.preventDefault();
+    const point = this.mapPoint(svg, event);
+    if (point) this.zoomMap(event.deltaY < 0 ? 1.15 : 1 / 1.15, point.x, point.y);
+  }
+
+  startMapDrag(event: PointerEvent) {
+    const svg = event.currentTarget;
+    if (!(svg instanceof SVGSVGElement)) return;
+    if (event.button !== 0 || this.drag || (event.target as Element).closest('.map-node')) return;
+    const point = this.mapPoint(svg, event);
+    if (!point) return;
+    svg.setPointerCapture(event.pointerId);
+    this.drag = {id: event.pointerId, x: point.x, y: point.y};
+  }
+
+  moveMap(event: PointerEvent) {
+    const svg = event.currentTarget;
+    if (!(svg instanceof SVGSVGElement)) return;
+    if (this.drag?.id !== event.pointerId) return;
+    const point = this.mapPoint(svg, event);
+    if (!point) return;
+    this.mapX += point.x - this.drag.x;
+    this.mapY += point.y - this.drag.y;
+    this.drag = {id: event.pointerId, x: point.x, y: point.y};
+  }
+
+  stopMapDrag(event: PointerEvent) {
+    if (this.drag?.id === event.pointerId) this.drag = undefined;
+  }
+
+  get mapRecord() {
+    return this.mapTarget?.kind === 'intent'
+      ? this.records.find(({record}) => record.id === this.mapTarget?.value)?.record
+      : undefined;
+  }
+
+  openMapNode(node: MapNode) {
+    this.mapTarget = node;
+    if (node.kind === 'intent') {
+      this.historyId = node.value;
+      this.history.set([]);
+      this.historyMessage.set('');
+    }
   }
 
   private lines(value: string) {
@@ -108,6 +267,8 @@ class Editor {
   }
 
   select(id: string) {
+    this.overview = false;
+    this.mapTarget = undefined;
     this.creating = false;
     this.confirmingRemoval = false;
     this.selected = this.records.find(entry => entry.record.id === id);
@@ -131,10 +292,14 @@ class Editor {
   async reload(preferred = this.record?.id) {
     this.busy = true;
     try {
-      const data = await request<{token: string; records: RecordEntry[]}>('/api/records');
+      const data = await request<{token: string; records: RecordEntry[]; nodeNames: Record<string, string>}>('/api/records');
+      this.mapTarget = undefined;
       this.records = data.records;
+      this.nodeNames = data.nodeNames;
       this.token = data.token;
-      this.select(this.filtered.find(item => item.record.id === preferred)?.record.id ?? this.filtered[0]?.record.id ?? '');
+      if (!this.overview) {
+        this.select(this.filtered.find(item => item.record.id === preferred)?.record.id ?? this.filtered[0]?.record.id ?? '');
+      }
     } catch (error) {
       this.report(error);
     } finally {

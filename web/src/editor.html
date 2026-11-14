@@ -1,33 +1,73 @@
-<header><h1>奇点星图</h1><span>Singularity Protocol</span></header>
-<main>
-  <aside>
-    <label for="filter">搜索 ID 或陈述</label>
-    <input id="filter" type="search" [(ngModel)]="filter">
-    <label for="records">记录</label>
-    <select id="records" size="7" [ngModel]="record?.id" (ngModelChange)="message = ''; select($event)">
-      @for (entry of filtered; track entry.record.id) {
-        <option [value]="entry.record.id">{{ entry.record.id }} · {{ entry.record.status === "Retired" ? "已移除" : entry.record.status }}</option>
+<header>
+  <h1>奇点星图</h1>
+  <nav aria-label="星图操作">
+    @if (!overview) {
+      <button class="secondary" (click)="select(''); overview = true">返回总览</button>
+    }
+    <button class="secondary" (click)="recordsDialog.showModal()">记录与搜索</button>
+    <button class="secondary" (click)="historyDialog.showModal()">Git 历史</button>
+    <button class="secondary" [disabled]="busy" (click)="reload()">重新加载</button>
+    <button [disabled]="busy" (click)="create()">新建候选</button>
+  </nav>
+</header>
+<main [class.overview-workspace]="overview">
+  <section class="star-map" [class.overview-map]="overview" aria-label="奇点关联星图">
+    @if (!overview) { <h2>关联星图</h2> }
+    @if (overview) {
+      @let graph = overviewGraph;
+      @if (filter) {
+        <div class="actions"><button class="secondary" (click)="filter = ''; mapTarget = undefined">清除筛选「{{ filter }}」</button></div>
       }
-    </select>
-    <div class="actions">
-      <button class="secondary" [disabled]="busy" (click)="reload()">重新加载</button>
-      <button [disabled]="busy" (click)="create()">新建候选</button>
-    </div>
-  </aside>
-  <section class="star-map" aria-label="奇点关联星图">
-    <h2>关联星图</h2>
-    @if (record || creating) {
+      @let active = graph.nodesByKey.get(mapTarget?.key ?? '');
+      @if (graph.nodes.length) {
+        <div class="map-toolbar">
+          <span>拖动空白处平移，滚轮缩放</span>
+          <button class="secondary" aria-label="放大" (click)="zoomMap(1.25, graph.width / 2, graph.height / 2)">＋</button>
+          <button class="secondary" aria-label="缩小" (click)="zoomMap(0.8, graph.width / 2, graph.height / 2)">−</button>
+          <button class="secondary" (click)="resetMap()">重置视图</button>
+        </div>
+        <svg class="overview-canvas" [attr.viewBox]="'0 0 ' + graph.width + ' ' + graph.height"
+          [class.dragging]="mapDragging" (wheel)="wheelMap($event)"
+          (pointerdown)="startMapDrag($event)" (pointermove)="moveMap($event)"
+          (pointerup)="stopMapDrag($event)" (pointercancel)="stopMapDrag($event)"
+          (lostpointercapture)="stopMapDrag($event)" aria-label="项目关联星图">
+          <g [attr.transform]="'translate(' + mapX + ' ' + mapY + ') scale(' + mapZoom + ')'">
+            @for (edge of graph.edges; track edge.source.key + '>' + edge.target.key) {
+              <line class="map-edge" [class.highlighted]="active === edge.source || active === edge.target"
+                [class.dimmed]="active && active !== edge.source && active !== edge.target" [attr.x1]="edge.source.x" [attr.y1]="edge.source.y"
+                [attr.x2]="edge.target.x" [attr.y2]="edge.target.y"/>
+            }
+            @for (node of graph.nodes; track node.key) {
+              <g class="map-node" [class.intent]="node.kind === 'intent'" [class.decision]="node.kind === 'decisions'"
+                [class.isolated]="!node.neighbors.length" [class.active]="active === node"
+                [class.dimmed]="active && active !== node && !node.neighbors.includes(active)"
+                [attr.aria-pressed]="active === node"
+                [attr.transform]="'translate(' + node.x + ' ' + node.y + ')'" tabindex="0" role="button"
+                [attr.aria-label]="node.label + ' · ' + node.value" (click)="openMapNode(node)"
+                (keydown.enter)="openMapNode(node)" (keydown.space)="$event.preventDefault(); openMapNode(node)">
+                <title>{{ node.label }} · {{ node.value }}</title>
+                <circle r="14"/>
+                <text y="33" text-anchor="middle">{{ node.label.length > 18 ? node.label.slice(0, 17) + '…' : node.label }}</text>
+              </g>
+            }
+          </g>
+        </svg>
+        <div class="map-key"><span>● 奇点</span><span>● 决策</span><span>● 路径</span><span>○ 无关联奇点</span></div>
+      } @else {
+        <p class="empty">没有匹配的奇点。</p>
+      }
+    } @else if (record || creating) {
       <div class="orbit">
         <div class="orbit-ring"></div>
-        <div class="planet core"><span>{{ creating ? '新候选' : record?.id }}</span></div>
+        <div class="planet core" [title]="record?.id ?? ''"><span>{{ record ? (nodeNames[record.id] || record.id) : '新候选' }}</span></div>
         @for (node of satellites; track node.kind + ':' + node.value) {
           @if ($index < 12) {
             <span class="ray" [style.rotate.deg]="node.angle" aria-hidden="true"></span>
             <button class="planet satellite" [class.decision]="node.kind === 'decisions'"
               [style.left.%]="node.x" [style.top.%]="node.y" [title]="node.value"
               (click)="selectLink(node)" [attr.aria-pressed]="selectedLink?.kind === node.kind && selectedLink.value === node.value"
-              [attr.aria-label]="(node.kind === 'paths' ? '路径 ' : '决策 ') + node.value">
-              <span>{{ node.value }}</span>
+              [attr.aria-label]="(node.name ? node.name + ' · ' : '') + node.value">
+              <span>{{ node.name || node.value }}</span>
             </button>
           }
         }
@@ -39,9 +79,9 @@
           <li>
             <span class="link-type" [class.decision]="node.kind === 'decisions'">{{ node.kind === 'paths' ? '路径' : '决策' }}</span>
             @if (editable) {
-              <button class="link-value secondary" [disabled]="busy" (click)="selectLink(node)">{{ node.value }}</button>
+              <button class="link-value secondary" [disabled]="busy" (click)="selectLink(node)">{{ node.name ? node.name + ' · ' + node.value : node.value }}</button>
             } @else {
-              <span class="link-value">{{ node.value }}</span>
+              <span class="link-value">{{ node.name ? node.name + ' · ' + node.value : node.value }}</span>
             }
             @if (editable) {
               <button class="secondary" [disabled]="busy" (click)="removeLink(node.kind, node.value)"
@@ -73,9 +113,41 @@
       <p class="empty">选择一条记录或新建候选。</p>
     }
   </section>
-  <section class="inspector" aria-label="记录详情">
+  <section class="inspector" aria-label="记录详情" [hidden]="overview ? !mapTarget && !message : !creating && !record && !message">
     <div id="message" role="status" [class.error]="error">{{ message }}</div>
-    @if (creating || record) {
+    @if (overview) {
+      <div class="panel-heading">
+        <h2>节点详情</h2>
+        @if (mapTarget) {
+          <button class="secondary" aria-label="关闭节点详情" (click)="mapTarget = undefined">关闭</button>
+        }
+      </div>
+      @if (mapTarget; as target) {
+        <h3>{{ target.label }}</h3>
+        <p>{{ target.value }}</p>
+        @if (mapRecord; as selectedRecord) {
+          <p>{{ selectedRecord.status === 'Retired' ? '已移除' : selectedRecord.status }}</p>
+          <h3>陈述</h3>
+          <p>{{ selectedRecord.statement }}</p>
+          @if (selectedRecord.reason; as reason) {
+            <h3>记录依据</h3>
+            <p class="map-reason">{{ reason }}</p>
+          }
+          @if (selectedRecord.rejection_reason; as reason) { <p>拒绝原因 {{ reason }}</p> }
+          <div class="actions"><button class="secondary" (click)="select(selectedRecord.id)">打开单条记录</button></div>
+        }
+        @if (target.neighbors.length) {
+          <h3>直接关联</h3>
+          <div class="actions">
+            @for (item of target.neighbors; track item.key) {
+              <button class="secondary" [title]="item.value" (click)="openMapNode(item)">{{ item.label }}</button>
+            }
+          </div>
+        }
+      } @else {
+        <p class="empty">点击星图中的节点查看详情。</p>
+      }
+    } @else if (creating || record) {
       <h2>{{ creating ? '新建候选奇点' : record?.id }}</h2>
       <p id="status">{{ creating ? 'Candidate' : record?.status === 'Retired' ? '已移除' : record?.status }} @if (record?.actor; as actor) { · {{ actor }} }</p>
       @if (creating) {
@@ -111,13 +183,34 @@
         }
       }
       <div id="details">
-        @if (record?.reason; as reason) { <p>原因 {{ reason }}</p> }
+        @if (record?.reason; as reason) { <h3>记录依据</h3><p>{{ reason }}</p> }
         @if (record?.rejection_reason; as reason) { <p>拒绝原因 {{ reason }}</p> }
       </div>
     }
   </section>
-  <section id="history-panel" aria-label="Git 历史">
-    <h2>Git 历史</h2>
+</main>
+<dialog #recordsDialog aria-labelledby="records-title">
+    <div class="panel-heading">
+      <h2 id="records-title">记录与搜索</h2>
+      <button class="secondary" (click)="recordsDialog.close()">关闭</button>
+    </div>
+    <label for="filter">搜索名称、ID 或陈述</label>
+    <input id="filter" type="search" [(ngModel)]="filter" (ngModelChange)="mapTarget = undefined">
+    <label for="records">记录</label>
+    <select id="records" size="7" [ngModel]="record?.id" (ngModelChange)="message = ''; select($event); recordsDialog.close()">
+      @for (entry of filtered; track entry.record.id) {
+        <option [value]="entry.record.id">{{ nodeNames[entry.record.id] || entry.record.id }} · {{ entry.record.status === "Retired" ? "已移除" : entry.record.status }}</option>
+      }
+    </select>
+    @if (filter) {
+      <div class="actions"><button class="secondary" (click)="filter = ''; mapTarget = undefined">清除筛选</button></div>
+    }
+</dialog>
+<dialog #historyDialog aria-labelledby="history-title">
+    <div class="panel-heading">
+      <h2 id="history-title">Git 历史</h2>
+      <button class="secondary" (click)="historyDialog.close()">关闭</button>
+    </div>
     <label for="history-id">稳定 ID</label>
     <input id="history-id" [(ngModel)]="historyId" placeholder="S-PROJECT-001">
     <div class="actions"><button [disabled]="historyBusy()" (click)="loadHistory()">查看历史</button></div>
@@ -134,5 +227,4 @@
         </details>
       }
     </div>
-  </section>
-</main>
+</dialog>

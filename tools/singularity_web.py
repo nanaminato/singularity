@@ -4,18 +4,36 @@ import json
 import re
 import secrets
 import sys
+import tomllib
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from threading import Lock
 from urllib.parse import parse_qs, urlsplit
 
-from singularity import edit_record, load_records, record_history, record_revision, working_sources
+from singularity import ID_PATTERN, edit_record, load_records, record_history, record_revision, working_sources
+
+
+def load_node_names(directory):
+    path = directory.parent / "node-names.toml"
+    try:
+        with path.open("rb") as source:
+            names = tomllib.load(source)
+    except FileNotFoundError:
+        return {}
+    except ValueError as error:
+        raise ValueError(f"{path.name}: {error}") from error
+    if any(not ID_PATTERN.fullmatch(key) or not isinstance(name, str) or not name.strip()
+           or name.splitlines() != [name] for key, name in names.items()):
+        raise ValueError(f"{path.name}: expected non-empty single-line names keyed by stable ID")
+    return {key: name.strip() for key, name in names.items()}
 
 
 def serve_editor(directory, port, *, open_browser=False, on_ready=None):
     assets = Path(__file__).with_name("editor")
-    page = (assets / "index.html").read_bytes()
+    page = assets / "index.html"
     token = secrets.token_urlsafe(32)
+    edit_lock = Lock()
 
     class Editor(BaseHTTPRequestHandler):
         def log_message(self, format, *args):
@@ -39,17 +57,19 @@ def serve_editor(directory, port, *, open_browser=False, on_ready=None):
             if self.headers.get("Host") != host:
                 self.send_json(403, {"error": "Invalid host"})
             elif self.path == "/":
-                self.send_content(200, page, "text/html; charset=utf-8")
+                self.send_content(200, page.read_bytes(), "text/html; charset=utf-8")
             elif self.path == "/api/records":
                 try:
                     records, _, errors = load_records(working_sources(directory, allow_empty=True))
                     if errors:
                         raise ValueError("\n".join(errors))
+                    names = load_node_names(directory)
                 except (OSError, ValueError) as error:
                     self.send_json(400, {"error": str(error)})
                     return
                 self.send_json(200, {
                     "token": token,
+                    "nodeNames": names,
                     "records": [
                         {"record": record, "revision": record_revision(record)}
                         for _, record in sorted(records.items())
@@ -104,20 +124,21 @@ def serve_editor(directory, port, *, open_browser=False, on_ready=None):
                     for key in required[action]
                 ):
                     raise ValueError("Missing or invalid edit fields")
-                changed = edit_record(
-                    directory, body["id"], "retire" if action == "remove" else action,
-                    statement=body.get("statement"), actor="Human", remove=action == "remove",
-                    expected=body.get("revision"),
-                    disposition=body.get("disposition"),
-                    paths=body.get("paths") if action in ("create", "links") else None,
-                    decisions=body.get("decisions") if action in ("create", "links") else None,
-                )
+                with edit_lock:
+                    changed = edit_record(
+                        directory, body["id"], "retire" if action == "remove" else action,
+                        statement=body.get("statement"), actor="Human", remove=action == "remove",
+                        expected=body.get("revision"),
+                        disposition=body.get("disposition"),
+                        paths=body.get("paths") if action in ("create", "links") else None,
+                        decisions=body.get("decisions") if action in ("create", "links") else None,
+                    )
             except (OSError, ValueError) as error:
                 self.send_json(400, {"error": str(error)})
                 return
             self.send_json(200, {"changed": changed})
 
-    with HTTPServer(("127.0.0.1", port), Editor) as server:
+    with ThreadingHTTPServer(("127.0.0.1", port), Editor) as server:
         host = f"127.0.0.1:{server.server_port}"
         url = f"http://{host}"
         if on_ready:
