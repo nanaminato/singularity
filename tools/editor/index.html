@@ -13,13 +13,15 @@
 <header><div><span>奇点 / 项目工作台</span><h1 id="project">项目模型</h1></div><button id="reload">重新加载</button></header>
 <p id="status" role="status"></p>
 <main>
-<aside>
+<aside id="sidebar">
 <label>管理对象<select id="collection"><option value="nodes">节点</option><option value="relations">关系</option><option value="references">文件引用</option><option value="views">树视图</option></select></label>
 <label id="tree-control">节点浏览方式<select id="tree"></select></label>
 <label>搜索<input id="search" type="search" placeholder="名称或 ID"></label>
 <button id="create">新建</button>
 
+<small id="object-count"></small>
 <ul id="items"></ul>
+<div id="sidebar-resize" role="separator" tabindex="0" aria-label="调整左栏宽度" aria-orientation="vertical" aria-controls="sidebar" title="拖动调整宽度，也可使用左右方向键"></div>
 </aside>
 <div id="universe-panel">
 <div class="universe-tools" role="toolbar" aria-label="画布工具栏">
@@ -36,6 +38,7 @@
 </details>
 <select id="visible-relations" multiple hidden aria-label="附加关系"></select>
 </div><canvas id="universe" aria-label="层级森林画布"></canvas></div>
+<section id="object-links" class="object-preview" aria-label="对象预览" hidden></section>
 <section id="inspector">
 <nav id="forest-navigation" aria-label="父子节点导航"></nav><h2 id="heading">请选择对象</h2>
 <form id="editor" hidden>

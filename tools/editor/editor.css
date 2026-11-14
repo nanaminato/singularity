@@ -51,7 +51,7 @@ ul { list-style:none; padding:0; }
 #forest-navigation { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px; }
 #forest-navigation:empty { display:none; }
 #forest-navigation button { font-size:11px; padding:3px 6px; color:#46779d; background:#f3f7fa; border-color:#e2e9ef; }
-.actions { display:flex; gap:6px; margin-top:16px; position:sticky; bottom:-18px; padding:10px 0; background:#fff; border-top:1px solid #e3e9ef; }
+.actions { display:flex; gap:6px; margin-top:16px; position:sticky; z-index:1; bottom:-18px; padding:10px 0; background:#fff; border-top:1px solid #e3e9ef; }
 details { border-top:1px solid #e0e6ec; padding-top:12px; margin-top:18px; }
 summary { cursor:pointer; font-weight:600; }
 fieldset { border:1px solid #dde5ed; border-radius:4px; margin:16px 0; padding:10px; }
@@ -83,3 +83,85 @@ legend { color:#61748a; font-size:12px; }
 #relation-options small { margin-left:auto; color:#8a9aaa; font-variant-numeric:tabular-nums; }
 @media(max-width:1350px) { .canvas-hint { display:none; } }
 @media(max-width:650px) { .universe-tools { gap:5px; padding:8px; } }
+
+main.management-layout { grid-template-columns:minmax(320px, 40%) minmax(400px, 1fr); }
+#object-count { color:#8393a4; font-size:11px; margin-bottom:5px; }
+#items .object-row { margin:3px 0; }
+#items .object-row > button { width:100%; padding:10px 8px; line-height:1.5; overflow-wrap:anywhere; }
+.object-row small { display:block; margin-top:4px; color:#7b8b9b; font-size:11px; }
+.management-layout #inspector { padding:24px 28px; }
+.management-layout #fields { max-width:720px; }
+.field-help { font-size:12px; color:#7b8b9b; }
+#object-links { margin-top:20px; border-top:1px solid #e0e7ef; }
+#object-links:empty { display:none; }
+#object-links h3 { font-size:13px; }
+#object-links button { display:block; margin:5px 0; color:#3474aa; }
+.root-option { display:flex; gap:8px; align-items:center; font-size:13px; }
+.root-option input { width:15px; height:15px; margin:0; }
+@media(max-width:750px) { main.management-layout { grid-template-columns:1fr; } }
+
+.root-picker { min-inline-size:0; }
+.root-options { max-height:300px; overflow:auto; margin-top:8px; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.root-option input { flex:0 0 15px; }
+
+main, main.management-layout, main.universe-layout {
+    --sidebar-space: 360px;
+    grid-template-columns: clamp(200px, var(--sidebar-width, 290px), calc(100% - var(--sidebar-space))) minmax(0, 1fr);
+}
+main.management-layout {
+    grid-template-columns: clamp(200px, var(--sidebar-width, 40%), calc(100% - var(--sidebar-space))) minmax(0, 1fr);
+}
+@media (min-width: 1101px) {
+    main.universe-layout {
+        --sidebar-space: 622px;
+        grid-template-columns: clamp(200px, var(--sidebar-width, 290px), calc(100% - var(--sidebar-space))) minmax(280px, 1fr) 340px;
+    }
+}
+#sidebar { position: relative; }
+#sidebar-resize {
+    position: absolute; z-index: 3; top: 0; right: -4px; bottom: 0; width: 9px;
+    cursor: col-resize; touch-action: none;
+}
+#sidebar-resize:hover, #sidebar-resize:focus-visible, #sidebar-resize.is-dragging {
+    background: #528fca; outline: none;
+}
+body.resizing-sidebar { cursor: col-resize; user-select: none; }
+@media (max-width: 750px) {
+    main, main.management-layout, main.universe-layout { grid-template-columns: 1fr; }
+    #sidebar-resize { display: none; }
+}
+
+main.management-layout { grid-template-columns:clamp(200px, var(--sidebar-width, 290px), calc(100% - var(--sidebar-space))) minmax(0, 1fr); }
+.object-preview { padding:0; height:calc(100vh - 112px); overflow:auto; background:#f8fafc; }
+.preview-heading { margin:0; font-size:13px; }
+.preview-toolbar { position:sticky; top:0; left:0; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-bottom:1px solid #dde5ec; background:white; }
+.preview-toolbar label { display:flex; align-items:center; gap:6px; margin:0; white-space:nowrap; }
+.preview-toolbar select { width:auto; padding:3px 6px; }
+.preview-body { padding:24px; width:max-content; min-width:100%; display:flex; justify-content:center; }
+.preview-body[data-align="top-left"] { justify-content:flex-start; }
+.preview-empty { color:#687b8d; margin:0; }
+#object-links.object-preview { margin:0; border:0; }
+#object-links .preview-node { margin:0; padding:9px 12px; text-align:left; background:#e9f2fa; color:#204a6d; border-color:#c6dbea; max-width:100%; }
+#object-links .preview-node:hover { background:#dcecf9; }
+.preview-node small { display:block; margin-top:3px; color:#54738c; }
+.preview-file { background:white; border:1px solid #d3dde7; border-radius:5px; padding:10px; overflow-wrap:anywhere; max-width:230px; text-align:center; }
+.preview-file small { display:block; color:#54738c; margin-top:3px; }
+.preview-tree, .preview-tree ul { display:flex; justify-content:center; margin:0; padding:0; }
+.preview-tree ul:empty { display:none; }
+.preview-tree ul { position:relative; padding-top:25px; }
+.preview-tree ul::before { content:""; position:absolute; height:13px; top:0; left:50%; border-left:1px solid #a8bcd0; }
+.preview-tree li { position:relative; margin:0; padding:0 7px; display:flex; flex-direction:column; align-items:center; }
+.preview-tree ul > li::before, .preview-tree ul > li::after { content:""; position:absolute; top:-12px; height:12px; width:50%; border-top:1px solid #a8bcd0; }
+.preview-tree ul > li::before { right:50%; }
+.preview-tree ul > li::after { left:50%; border-left:1px solid #a8bcd0; }
+.preview-tree ul > li:first-child::before, .preview-tree ul > li:last-child::after { border-top:0; }
+#object-links .preview-node { text-align:center; min-width:125px; max-width:200px; }
+.preview-edge-label { color:#54738c; margin:0 0 6px; font-size:11px; }
+@media (min-width:1101px) {
+    main.management-layout { --sidebar-space:622px; grid-template-columns:clamp(200px, var(--sidebar-width, 290px), calc(100% - var(--sidebar-space))) minmax(280px,1fr) 340px; }
+    .management-layout #inspector { padding:18px; }
+}
+@media (max-width:750px) {
+    main.management-layout { grid-template-columns:1fr; }
+    .object-preview { height:auto; max-height:420px; }
+}

@@ -5,6 +5,7 @@ const selected = control => Array.from(control.selectedOptions, option => option
 let state, active, original, dirty = false, busy = false;
 let readers = new Map();
 const collection = () => get("collection").value;
+const relationNames = {contains:"组成",decomposes:"目标分解",plans:"交付计划",depends_on:"依赖",derived_from:"推导依据",constrains:"约束",implements:"实现",verifies:"验证",supports:"证据支持",conflicts_with:"冲突",supersedes:"替代",references:"一般关联"};
 const nodes = () => state.model.nodes.map(node => [node.id, node.title + " · " + node.id]);
 
 function status(message, error = false) {
@@ -61,7 +62,15 @@ function showList() {
     const search = get("search").value.trim().toLowerCase();
     get("items").replaceChildren();
     universe.render(group === "nodes", search);
-    const matching = new Set(rows.filter(r => { const n = records.get(r.id); return [n.title,n.id,n.body].join(" ").toLowerCase().includes(search); }).map(r => r.id));
+    const matching = new Set(rows.filter(r => {
+        const n = records.get(r.id);
+        const names = state.model.nodes.filter(node => [n.source,n.target,...(n.roots || [])].includes(node.id)).map(node=>node.title);
+        return [...Object.values(n),...names,relationNames[n.type]].join(" ").toLowerCase().includes(search);
+    }).map(r => r.id));
+    document.querySelector("main").classList.toggle("management-layout", group !== "nodes");
+    get("object-count").textContent = matching.size + " / " + records.size;
+    get("search").placeholder = group === "nodes" ? "名称、ID 或正文" : "搜索名称、ID、路径或关联节点";
+    get("create").textContent = {nodes:"新建节点",relations:"新建关系",references:"新建引用",views:"新建视图"}[group];
     if (search && group === "nodes") {
         const parents = new Map(rows.map(r => [r.id,r.parent]));
         for (const id of [...matching]) { let parent = parents.get(id); while(parent) { matching.add(parent); parent = parents.get(parent); } }
@@ -81,6 +90,19 @@ function showList() {
         button.setAttribute("aria-current", String(active?.id === id));
         button.onclick = () => { if (canLeave()) { edit(item); universe.focus(id); } };
         row.append(button);
+        if (group !== "nodes") {
+            row.className = "object-row";
+            const name = id => state.model.nodes.find(n=>n.id===id)?.title || id;
+            button.textContent = group === "relations"
+                ? name(item.source) + " → " + name(item.target)
+                : item.title || item.target;
+            const details = document.createElement("small");
+            const usage = group === "references" ? state.model.nodes.filter(n=>n.references?.includes(id)).length : 0;
+            details.textContent = group === "relations" ? (relationNames[item.type] || item.type) + " · " + id
+                : group === "references" ? item.purpose + " · " + usage + " 个节点使用 · " + id
+                : ({composition:"系统组成",objectives:"目标能力",delivery:"交付计划"}[item.kind]) + " · " + item.roots.length + " 个根节点 · " + id;
+            button.append(details);
+        }
         if (view) decorateTree(row, id, title, depth, view);
         get("items").append(row);
     }
@@ -136,6 +158,7 @@ function edit(item, creating = false) {
     const group = collection();
     const pane = get("fields");
     pane.replaceChildren();
+    get("object-links").replaceChildren();
     get("editor").hidden = !active;
     get("remove").hidden = !original;
     get("delete-confirmation").hidden = true;
@@ -144,6 +167,7 @@ function edit(item, creating = false) {
     get("heading").textContent = item?.title || item?.id || (creating ? "新建对象" : "请选择对象");
     showList();
     forestNavigation();
+    managementLinks();
     const selectedRow = get("items").querySelector('button[aria-current="true"]');
     if (selectedRow) {
         const list = get("items");
@@ -207,7 +231,7 @@ function edit(item, creating = false) {
         readers.set("attributes", () => Object.fromEntries(Array.from(attributeReaders, ([key, read]) => [key, read()])));
         add("basis", "人工决定依据（确认、拒绝、退役或更改受保护节点时填写）", {long: true});
     } else if (group === "relations") {
-        add("type", "关系类型", choice(state.schema.relations));
+        add("type", "关系类型", choice(state.schema.relations.map(type=>[type,relationNames[type] || type])));
         add("source", "起点", choice(nodes()));
         add("target", "终点", choice(nodes()));
         add("rationale", "关系依据", {long: true});
@@ -219,10 +243,49 @@ function edit(item, creating = false) {
         add("locator", "章节或符号");
         add("revision", "版本标识");
         add("digest", "SHA-256 摘要");
+        const help = document.createElement("p");
+        help.className = "field-help";
+        help.textContent = "固定版本需填写版本标识或 SHA-256 摘要。外部文件使用绝对路径，项目内文件使用相对路径。";
+        pane.append(help);
     } else {
         add("title", "视图名称", required);
         add("kind", "树类型", choice([["composition", "系统组成"], ["objectives", "目标能力"], ["delivery", "交付计划"]]));
-        add("roots", "根节点", {...choice(nodes()), multiple: true});
+        const rootNames = nodes();
+        const list = document.createElement("fieldset");
+        list.className = "root-picker";
+        const legend = document.createElement("legend");
+        legend.textContent = "根节点";
+        const search = document.createElement("input");
+        search.type = "search";
+        search.placeholder = "筛选根节点";
+        search.setAttribute("aria-label", "筛选根节点");
+        const choices = document.createElement("div");
+        choices.className = "root-options";
+        choices.setAttribute("role", "group");
+        choices.setAttribute("aria-label", "可选根节点");
+        list.append(legend, search, choices);
+        const rootControls = [];
+        for (const [id, title] of rootNames) {
+            const label = document.createElement("label");
+            label.className = "root-option";
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = (active.roots || []).includes(id);
+            label.append(checkbox, document.createTextNode(title));
+            rootControls.push({id,title,label,checkbox});
+            choices.append(label);
+        }
+        search.oninput = event => {
+            event.stopPropagation();
+            choices.scrollTop = 0;
+            for (const row of rootControls) row.label.hidden = !row.title.toLowerCase().includes(search.value.toLowerCase());
+        };
+        readers.set("roots", () => {
+            const checked = rootControls.filter(row=>row.checkbox.checked).map(row=>row.id);
+            return [...(active.roots || []).filter(id=>checked.includes(id)),
+                ...checked.filter(id=>!(active.roots || []).includes(id))];
+        });
+        pane.append(list);
     }
 }
 
@@ -295,6 +358,7 @@ let lastCollection = collection();
 get("collection").onchange = () => {
     if (!state || !canLeave()) { get("collection").value = lastCollection; return; }
     lastCollection = collection();
+    get("search").value = "";
     edit();
 };
 get("search").oninput = () => { if (state) showList(); };
@@ -336,3 +400,157 @@ get("query").onsubmit = async event => {
 };
 
 load().catch(error => status(error.message, true));
+
+let previewAlignment = "center";
+
+function managementLinks() {
+    const panel = get("object-links");
+    const group = collection();
+    panel.replaceChildren();
+    panel.hidden = group === "nodes";
+    if (panel.hidden) return;
+    const heading = document.createElement("h3");
+    heading.className = "preview-heading";
+    heading.textContent = {relations:"关系预览",references:"引用预览",views:"树预览"}[group];
+    const toolbar = document.createElement("div");
+    toolbar.className = "preview-toolbar";
+    const placement = document.createElement("label");
+    placement.textContent = "主题位置";
+    const alignment = document.createElement("select");
+    options(alignment, [["center","居中"],["top-left","左上"]], previewAlignment);
+    placement.append(alignment);
+    toolbar.append(heading, placement);
+    panel.append(toolbar);
+
+    const body = document.createElement("div");
+    body.className = "preview-body";
+    body.dataset.align = previewAlignment;
+    alignment.onchange = () => {
+        previewAlignment = alignment.value;
+        body.dataset.align = previewAlignment;
+        panel.scrollLeft = 0;
+        panel.scrollTop = 0;
+    };
+    panel.append(body);
+    if (!original) {
+        const hint = document.createElement("p");
+        hint.className = "preview-empty";
+        hint.textContent = "从左侧选择一个对象查看结构";
+        body.append(hint);
+        return;
+    }
+    const records = new Map(state.model.nodes.map(node => [node.id, node]));
+    function nodeButton(id, role) {
+        const node = records.get(id);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "preview-node";
+        button.textContent = node.title;
+        const detail = document.createElement("small");
+        detail.textContent = role ? role + " · " + id : id;
+        button.append(detail);
+        button.onclick = () => {
+            if (!canLeave()) return;
+            get("collection").value = "nodes";
+            lastCollection = "nodes";
+            get("search").value = "";
+            edit(node);
+            universe.focus(id);
+        };
+        return button;
+    }
+    const list = document.createElement("ul");
+    list.className = "preview-tree";
+    body.append(list);
+
+    function branch(parent, card) {
+        const item = document.createElement("li");
+        item.append(card);
+        parent.append(item);
+        const children = document.createElement("ul");
+        item.append(children);
+        return children;
+    }
+
+    if (group === "relations") {
+        const children = branch(list, nodeButton(original.source, "起点"));
+        const target = nodeButton(original.target, "终点");
+        const label = document.createElement("span");
+        label.className = "preview-edge-label";
+        label.textContent = relationNames[original.type] || original.type;
+        branch(children, target).parentElement.prepend(label);
+    } else if (group === "references") {
+        const file = document.createElement("div");
+        file.className = "preview-file";
+        file.textContent = original.target;
+        const users = state.model.nodes.filter(node => node.references?.includes(original.id));
+        const caption = document.createElement("small");
+        caption.textContent = users.length ? users.length + " 个节点使用" : "当前没有节点使用";
+        file.append(caption);
+        const children = branch(list, file);
+        for (const node of users) branch(children, nodeButton(node.id));
+    } else {
+        const branches = new Map();
+        for (const row of state.trees[original.id] || []) {
+            branches.set(row.id, branch(branches.get(row.parent) || list, nodeButton(row.id)));
+        }
+    }
+}
+
+function initializeSidebarResize() {
+    const sidebar = get("sidebar");
+    const handle = get("sidebar-resize");
+    const layout = sidebar.parentElement;
+    const key = "singularity.sidebarWidth";
+    const minimum = 200;
+    let drag = null;
+    function maximum() {
+        const reserve = parseInt(getComputedStyle(layout).getPropertyValue("--sidebar-space"), 10);
+        return Math.max(minimum, layout.clientWidth - reserve);
+    }
+    function updateAccessibility() {
+        handle.setAttribute("aria-valuemin", minimum);
+        handle.setAttribute("aria-valuemax", maximum());
+        handle.setAttribute("aria-valuenow", sidebar.offsetWidth);
+    }
+    function resize(width) {
+        const constrained = Math.round(Math.max(minimum, Math.min(maximum(), width)));
+        layout.style.setProperty("--sidebar-width", constrained + "px");
+        updateAccessibility();
+        return constrained;
+    }
+    function remember(width) {
+        try { localStorage.setItem(key, String(width)); }
+        catch { /* The current layout still works without browser storage. */ }
+    }
+    try {
+        const width = Number(localStorage.getItem(key));
+        if (width > 0) layout.style.setProperty("--sidebar-width", width + "px");
+    } catch { /* Keep the default width. */ }
+    new ResizeObserver(updateAccessibility).observe(sidebar);
+    handle.onpointerdown = event => {
+        if (drag || event.button !== 0) return;
+        drag = {id: event.pointerId, x: event.clientX, width: sidebar.offsetWidth};
+        handle.setPointerCapture(event.pointerId);
+        handle.classList.add("is-dragging");
+        document.body.classList.add("resizing-sidebar");
+        event.preventDefault();
+    };
+    handle.onpointermove = event => {
+        if (event.pointerId === drag?.id) resize(drag.width + event.clientX - drag.x);
+    };
+    handle.onlostpointercapture = () => {
+        drag = null;
+        handle.classList.remove("is-dragging");
+        document.body.classList.remove("resizing-sidebar");
+        remember(sidebar.offsetWidth);
+    };
+    handle.onkeydown = event => {
+        const change = {ArrowLeft: -16, ArrowRight: 16}[event.key];
+        if (!change) return;
+        event.preventDefault();
+        remember(resize(sidebar.offsetWidth + change));
+    };
+}
+
+initializeSidebarResize();
