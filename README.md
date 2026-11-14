@@ -2,7 +2,7 @@
 
 让人维护少量不可安全推导的意图，让现有 Coding Agent 推导和维护实现。
 
-**0.1.0 · Draft**。这一版是一套 Markdown 协议与项目导入模板，可以由 Codex、Claude Code 或其他能读取项目指令的 Agent 使用。它尚未验证长期效果；没有 CLI、数据库、Graph Engine 或自研 Agent。
+**0.3.0 · Draft**。协议以 Markdown 编写，CLI 和本地网页共用 TOML 奇点记录。协议的长期效果仍待验证。
 
 ## 核心思想
 
@@ -19,7 +19,7 @@
 | --- | --- |
 | 在现有项目使用 | [导入指南](docs/adoption.md) |
 | 了解协议数据语义 | [SPEC.md](SPEC.md) |
-| 查看十条元奇点 | [Meta Singularities](protocol/meta-singularities.md) |
+| 查看十条元奇点 | [Meta Singularities](.singularity/singularities/) |
 | 了解确认与变更 | [生命周期](protocol/lifecycle.md) |
 | 了解追溯和影响范围 | [关系](protocol/relations.md) |
 | 新项目示例 | [Minimal](examples/minimal/README.md) |
@@ -58,6 +58,10 @@ docs/                        导入、实验、来源与路线图
 
 ## 版本与升级
 
-项目固定使用 `0.1.0`，来源指向 `v0.1.0` Git 标签。升级时由人明确选择版本，Agent 比较协议变化、重评受影响记录。不要通过跟随 `main` 隐式更换协议。完整规范留在协议仓库，目标项目只维护短入口和自己的意图记录。
+项目固定所用版本及对应的 Git 标签或提交。当前草案为 `0.3.0`，旧协议可从 Git 历史查阅。升级时由人明确选择版本，Agent 比较协议变化并重评受影响记录。完整规范留在协议仓库，目标项目维护短入口和自己的意图记录。
 
 来源是用户提供的 [讨论对话](https://chatgpt.com/share/6abcc255-60d0-83e9-8752-e24bc93d1f52)，取其中最后一轮“Protocol 先行、可增量导入”的方案；[来源与取舍](docs/origin.md) 说明具体边界。
+
+## 本地奇点工具
+
+Windows 用户可双击 [open-editor.pyw](open-editor.pyw)，在图形窗口选择自己的项目目录。启动器使用本机 Python 3.11+，自动打开 Angular 编辑器。Agent 可通过 CLI 操作同一批 TOML 记录。分发与构建步骤见 [工具文档](tools/README.md)。

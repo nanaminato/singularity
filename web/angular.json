@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "projects": {
+    "editor": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "index": "src/index.html",
+            "tsConfig": "tsconfig.json",
+            "styles": ["src/styles.css"],
+            "outputPath": {"base": "../tools/editor", "browser": ""},
+            "outputHashing": "all",
+            "optimization": {"scripts": true, "styles": {"minify": true, "inlineCritical": false}, "fonts": false}
+          }
+        }
+      }
+    }
+  }
+}

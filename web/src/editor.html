@@ -1,0 +1,138 @@
+<header><h1>奇点星图</h1><span>Singularity Protocol</span></header>
+<main>
+  <aside>
+    <label for="filter">搜索 ID 或陈述</label>
+    <input id="filter" type="search" [(ngModel)]="filter">
+    <label for="records">记录</label>
+    <select id="records" size="7" [ngModel]="record?.id" (ngModelChange)="message = ''; select($event)">
+      @for (entry of filtered; track entry.record.id) {
+        <option [value]="entry.record.id">{{ entry.record.id }} · {{ entry.record.status === "Retired" ? "已移除" : entry.record.status }}</option>
+      }
+    </select>
+    <div class="actions">
+      <button class="secondary" [disabled]="busy" (click)="reload()">重新加载</button>
+      <button [disabled]="busy" (click)="create()">新建候选</button>
+    </div>
+  </aside>
+  <section class="star-map" aria-label="奇点关联星图">
+    <h2>关联星图</h2>
+    @if (record || creating) {
+      <div class="orbit">
+        <div class="orbit-ring"></div>
+        <div class="planet core"><span>{{ creating ? '新候选' : record?.id }}</span></div>
+        @for (node of satellites; track node.kind + ':' + node.value) {
+          @if ($index < 12) {
+            <span class="ray" [style.rotate.deg]="node.angle" aria-hidden="true"></span>
+            <button class="planet satellite" [class.decision]="node.kind === 'decisions'"
+              [style.left.%]="node.x" [style.top.%]="node.y" [title]="node.value"
+              (click)="selectLink(node)" [attr.aria-pressed]="selectedLink?.kind === node.kind && selectedLink.value === node.value"
+              [attr.aria-label]="(node.kind === 'paths' ? '路径 ' : '决策 ') + node.value">
+              <span>{{ node.value }}</span>
+            </button>
+          }
+        }
+      </div>
+      @if (satellites.length > 12) { <p>星图展示前 12 项。完整关联如下。</p> }
+      <div class="legend"><span>● 路径</span><span>● 决策</span></div>
+      <ul class="links">
+        @for (node of satellites; track node.kind + ':' + node.value) {
+          <li>
+            <span class="link-type" [class.decision]="node.kind === 'decisions'">{{ node.kind === 'paths' ? '路径' : '决策' }}</span>
+            @if (editable) {
+              <button class="link-value secondary" [disabled]="busy" (click)="selectLink(node)">{{ node.value }}</button>
+            } @else {
+              <span class="link-value">{{ node.value }}</span>
+            }
+            @if (editable) {
+              <button class="secondary" [disabled]="busy" (click)="removeLink(node.kind, node.value)"
+                [attr.aria-label]="'解除关联 ' + node.value">解除</button>
+            }
+          </li>
+        }
+      </ul>
+      @if (editable) {
+        <div class="link-editor">
+          <div><label for="link-kind">类型</label><select id="link-kind" [(ngModel)]="linkKind">
+            <option value="paths">路径</option><option value="decisions">决策</option>
+          </select></div>
+          <div><label for="link-value">关联目标</label>
+            <input id="link-value" [(ngModel)]="linkValue" (keydown.enter)="addLink()"
+              [placeholder]="linkKind === 'paths' ? 'src/module/' : 'D-PROJECT-001'"></div>
+          <button [disabled]="busy || !linkValue.trim()" (click)="addLink()">{{ selectedLink ? '更新关联' : '添加关联' }}</button>
+          @if (selectedLink) {
+            <button class="secondary" (click)="selectedLink = undefined; linkValue = ''">取消编辑</button>
+          }
+        </div>
+        <div class="actions">
+          <button [disabled]="busy" (click)="edit(creating ? 'create' : 'links')">
+            {{ creating ? '创建候选' : '保存关联' }}
+          </button>
+        </div>
+      }
+    } @else {
+      <p class="empty">选择一条记录或新建候选。</p>
+    }
+  </section>
+  <section class="inspector" aria-label="记录详情">
+    <div id="message" role="status" [class.error]="error">{{ message }}</div>
+    @if (creating || record) {
+      <h2>{{ creating ? '新建候选奇点' : record?.id }}</h2>
+      <p id="status">{{ creating ? 'Candidate' : record?.status === 'Retired' ? '已移除' : record?.status }} @if (record?.actor; as actor) { · {{ actor }} }</p>
+      @if (creating) {
+        <label for="new-id">稳定 ID</label>
+        <input id="new-id" [(ngModel)]="newId" placeholder="S-PROJECT-001">
+      }
+      <label for="statement">陈述</label>
+      <textarea id="statement" [(ngModel)]="statement" [readOnly]="!editable"></textarea>
+      @if (editable && !creating) {
+        <div class="actions">
+          <button [disabled]="busy" (click)="edit('update')">保存陈述</button>
+          @if (record?.status === 'Candidate') {
+            <button [disabled]="busy" (click)="edit('confirm')">确认当前记录</button>
+          }
+        </div>
+      }
+      @if (record?.status === 'Candidate') {
+        <label for="disposition">拒绝原因</label>
+        <textarea id="disposition" [(ngModel)]="disposition"></textarea>
+        <div class="actions"><button class="secondary" [disabled]="busy" (click)="edit('reject')">拒绝候选</button></div>
+      }
+      @if (record?.status === 'Confirmed') {
+        <div class="actions">
+          <button class="secondary" [disabled]="busy" (click)="edit('retire')">标记为已移除</button>
+          <button class="secondary" [disabled]="busy" (click)="confirmingRemoval = true">直接删除记录</button>
+        </div>
+        @if (confirmingRemoval) {
+          <p role="status">将从当前项目删除 {{ record.id }} 的记录文件。</p>
+          <div class="actions">
+            <button [disabled]="busy" (click)="edit('remove')">确认删除</button>
+            <button class="secondary" [disabled]="busy" (click)="confirmingRemoval = false">取消</button>
+          </div>
+        }
+      }
+      <div id="details">
+        @if (record?.reason; as reason) { <p>原因 {{ reason }}</p> }
+        @if (record?.rejection_reason; as reason) { <p>拒绝原因 {{ reason }}</p> }
+      </div>
+    }
+  </section>
+  <section id="history-panel" aria-label="Git 历史">
+    <h2>Git 历史</h2>
+    <label for="history-id">稳定 ID</label>
+    <input id="history-id" [(ngModel)]="historyId" placeholder="S-PROJECT-001">
+    <div class="actions"><button [disabled]="historyBusy()" (click)="loadHistory()">查看历史</button></div>
+    <div id="history-result" aria-live="polite">
+      <p>{{ historyMessage() }}</p>
+      @for (entry of history(); track entry.commit) {
+        <details>
+          <summary>{{ entry.date }} · {{ entry.commit.slice(0, 8) }} · {{ entry.subject }}</summary>
+          @if (entry.path_before !== entry.path_after) {
+            <p>旧路径 {{ entry.path_before || '—' }}</p>
+            <p>新路径 {{ entry.path_after || '—' }}</p>
+          }
+          <p class="history-changes">{{ changes(entry) }}</p>
+        </details>
+      }
+    </div>
+  </section>
+</main>
