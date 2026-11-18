@@ -8,6 +8,7 @@ from singularity_core import Store, empty_model, validate, apply, ModelError
 from singularity_core.model import TYPES, RELATIONS
 from singularity_core.storage import unique_object
 from singularity_core.query import traverse, tree, check_references, gaps
+from singularity_core.brief import bounded_context, find, wire
 
 
 def main(argv=None):
@@ -20,10 +21,19 @@ def main(argv=None):
         commands.add_parser(name)
     get = commands.add_parser('get')
     get.add_argument('id')
+    search = commands.add_parser('find', help='search nodes without printing their bodies')
+    search.add_argument('query')
+    search.add_argument('--type', action='append', default=[], dest='types')
+    search.add_argument('--limit', type=int, default=12)
     for name in ('context', 'impact'):
         command = commands.add_parser(name)
         command.add_argument('id')
         command.add_argument('--depth', type=int, default=2)
+        if name == 'context':
+            command.add_argument('--summary', action='store_true', help='print IDs, titles, statuses and basis links only')
+            command.add_argument('--relation', action='append', choices=RELATIONS)
+            command.add_argument('--max-nodes', type=int)
+            command.add_argument('--max-bytes', type=int, help='cap compact UTF-8 output including its final newline')
     command = commands.add_parser('tree')
     command.add_argument('id')
     command = commands.add_parser('check-refs')
@@ -68,6 +78,16 @@ def main(argv=None):
                 if item is None:
                     raise ModelError('Object not found')
                 result = {'revision': revision, 'object': item}
+            elif args.command == 'find':
+                sys.stdout.buffer.write(wire(find(model, args.query, args.types, args.limit) | {'revision': revision}))
+                return 0
+            elif args.command == 'context' and (args.summary or args.relation is not None
+                    or args.max_nodes is not None or args.max_bytes is not None):
+                limits = {k: getattr(args, k) for k in ('max_nodes', 'max_bytes') if getattr(args, k) is not None}
+                result = bounded_context(model, args.id, args.depth, relations=args.relation or (),
+                                         summary_only=args.summary, revision=revision, **limits)
+                sys.stdout.buffer.write(wire(result))
+                return 0
             elif args.command in ('context', 'impact'):
                 result = traverse(model, args.id, args.depth, args.command == 'impact')
             elif args.command == 'tree':

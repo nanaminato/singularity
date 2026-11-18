@@ -40,6 +40,8 @@ put 是完整对象替换，不是字段合并。collection 支持 nodes/relatio
 ## 查询
 
 ```powershell
+python tools/singularity.py --project ../littleloop find "SQLite" --type module --limit 8
+python tools/singularity.py --project ../littleloop context IFACE-EVENT --depth 2 --summary --max-nodes 12 --max-bytes 8192
 python tools/singularity.py --project ../littleloop get IFACE-EVENT
 python tools/singularity.py --project ../littleloop context IFACE-EVENT --depth 2
 python tools/singularity.py --project ../littleloop impact IFACE-EVENT --depth 3
@@ -49,6 +51,12 @@ python tools/singularity.py --project ../littleloop check-refs
 ```
 
 context 双向取邻域；impact 按依赖方向取重评线索，含原因边。depth 范围 0–100，默认 2。tree 返回展平行，每行带 ID、父级和深度。gaps 输出缺少验证关联、未决假设/问题/冲突及 stale 状态，不代表项目完整性证明。
+
+给 Agent 的推荐顺序是 `find` → `context --summary` → 对少量 ID 执行 `get`。find 按 NFKC 和大小写归一后匹配每个空格分隔的词，检索 ID、标题、正文和附带引用的路径/用途，结果只返回 ID、标题、类型和状态。它不是语义翻译或全文档搜索；找不到结果时可换用术语、已知 ID 或阅读关联文档。`--type` 可重复，`--limit` 是 1–100。
+
+不带新增参数的 context 保持原输出。使用 `--summary`、`--relation`（可重复）、`--max-nodes` 或 `--max-bytes` 任一参数启用精简查询格式，默认最多 16 个节点和 8192 字节。节点范围 1–250；字节范围 1024–1000000，按最终 UTF-8 JSON（含换行）计量。按根节点、关键节点、距离和 ID 稳定排序。显式 `verification_basis` 在关系过滤之外补入一次，不继续递归；摘要保留引用与验证依据的 ID，以及是否存在授权依据。可用 `get` 展开正文、引用、授权或验证依据。
+
+`via` 是一个发现关系，不是全部路径。输出中的 `omissions` 区分节点总省略数、关键节点省略数、有限的关键 ID 示例及未列出的数量；输出太小也可能放不下根节点。遇到关键省略应扩大预算、沿 ID 追查或缩小范围，不应将省略解释为不存在。深度、关系滤镜之外的节点不计入预算省略数。
 
 check-refs 返回 exists/missing/matched/changed/outside_project/unreadable/unchecked。默认不检查外部文件，`--external` 才启用。URL 不联网检查。存在性不意味着 revision 或 locator 已验证；结果明确显示检查边界。
 
